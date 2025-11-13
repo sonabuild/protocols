@@ -303,7 +303,7 @@ describe('Amount Utils - Integer Overflow Protection', () => {
     });
 
     test('should throw on non-integer number raw amounts', () => {
-      expect(() => safeRawToAmount(123.45, 9, 'SOL')).toThrow('must be non-negative integer');
+      expect(() => safeRawToAmount(123.45, 9, 'SOL')).toThrow('not safe integer');
     });
 
     test('should throw on invalid type for raw amount', () => {

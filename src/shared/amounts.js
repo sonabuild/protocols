@@ -107,7 +107,10 @@ export function safeRawToAmount(rawAmount, decimals, tokenSymbol = 'token') {
       throw new Error(`Invalid raw amount for ${tokenSymbol}: cannot parse "${rawAmount}" as BigInt`);
     }
   } else if (typeof rawAmount === 'number') {
-    if (!Number.isInteger(rawAmount) || rawAmount < 0) {
+    if (!Number.isSafeInteger(rawAmount)) {
+      throw new Error(`Invalid raw amount for ${tokenSymbol}: ${rawAmount} is not safe integer`);
+    }
+    if (rawAmount < 0) {
       throw new Error(`Invalid raw amount for ${tokenSymbol}: must be non-negative integer, got ${rawAmount}`);
     }
     raw = BigInt(rawAmount);
