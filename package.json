@@ -5,6 +5,9 @@
   "description": "Open-source protocol definitions for Sona attested transactions",
   "author": "Asymmetric Information Inc.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/sonabuild/protocols.git"
@@ -45,7 +48,11 @@
     "build:jupiter": "bun x esbuild src/protocols/jupiter/index.js --bundle --platform=node --target=node20 --format=esm --outfile=dist/jupiter.bundle.js --external:node:* --minify",
     "build:wallet": "bun x esbuild src/protocols/wallet/index.js --bundle --platform=node --target=node20 --format=esm --outfile=dist/wallet.bundle.js --external:node:* --minify",
     "build:check": "bun --eval \"Promise.all([import('./dist/enclave.bundle.js'), import('./dist/solend.bundle.js'), import('./dist/jupiter.bundle.js'), import('./dist/wallet.bundle.js')]).then(() => console.log('✓ All bundles import successfully')).catch(e => { console.error('✗ Bundle import failed:', e.message); process.exit(1); })\"",
-    "prepublishOnly": "bun test && bun run build && bun run build:check"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "bun test && bun run build && bun run build:check",
+    "patch": "bun test && bun run build && npm version patch && npm publish",
+    "minor": "bun test && bun run build && npm version minor && npm publish",
+    "major": "bun test && bun run build && npm version major && npm publish"
   },
   "dependencies": {
     "@solana/addresses": "^4.0.0",
