@@ -436,6 +436,52 @@ describe('Jupiter Schema', () => {
     });
   });
 
+  describe('Display Data', () => {
+    test('should transform swap params for UI display', () => {
+      const params = {
+        inputMint: 'So11111111111111111111111111111111111111112',  // SOL
+        outputMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+        amount: 1.5,
+        slippageBps: 50
+      };
+
+      const displayData = swapOperation.displayData(params);
+
+      expect(displayData).toBeDefined();
+      expect(displayData.swap).toBeDefined();
+      expect(displayData.swap.inputToken.symbol).toBe('SOL');
+      expect(displayData.swap.inputToken.mint).toBe(params.inputMint);
+      expect(displayData.swap.outputToken.symbol).toBe('USDC');
+      expect(displayData.swap.outputToken.mint).toBe(params.outputMint);
+      expect(displayData.swap.route.slippage).toBe(50);
+    });
+
+    test('should handle unknown mints', () => {
+      const params = {
+        inputMint: 'UnknownMint1111111111111111111111111111111',
+        outputMint: 'UnknownMint2222222222222222222222222222222',
+        amount: 100
+      };
+
+      const displayData = swapOperation.displayData(params);
+
+      // Should fall back to showing the mint address
+      expect(displayData.swap.inputToken.mint).toBe(params.inputMint);
+      expect(displayData.swap.outputToken.mint).toBe(params.outputMint);
+    });
+
+    test('should use default slippage if not provided', () => {
+      const params = {
+        inputMint: 'So11111111111111111111111111111111111111112',
+        outputMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+        amount: 1.0
+      };
+
+      const displayData = swapOperation.displayData(params);
+      expect(displayData.swap.route.slippage).toBe(50); // default from schema
+    });
+  });
+
   // describe('UI Metadata', () => {
   //   test('should have UI configuration', () => {
   //     expect(swapOperation.ui).toBeDefined();

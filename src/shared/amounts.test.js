@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { safeAmountToRaw, safeRawToAmount, MAX_SAFE_AMOUNTS } from './amounts.js';
+import { safeAmountToRaw, safeRawToAmount, MAX_SAFE_AMOUNTS, isAmountSafe, getMaxSafeAmount } from './amounts.js';
 
 describe('Amount Utils - Integer Overflow Protection', () => {
   describe('MAX_SAFE_AMOUNTS table', () => {
@@ -265,6 +265,54 @@ describe('Amount Utils - Integer Overflow Protection', () => {
     });
   });
 
+  describe('safeRawToAmount - Invalid Inputs', () => {
+    test('should throw on invalid decimals - negative', () => {
+      expect(() => safeRawToAmount(1000000n, -1, 'SOL')).toThrow('Invalid decimals');
+    });
+
+    test('should throw on invalid decimals - too large', () => {
+      expect(() => safeRawToAmount(1000000n, 19, 'SOL')).toThrow('Invalid decimals');
+    });
+
+    test('should throw on invalid decimals - not integer', () => {
+      expect(() => safeRawToAmount(1000000n, 6.5, 'SOL')).toThrow('Invalid decimals');
+    });
+
+    test('should handle string raw amounts', () => {
+      const result = safeRawToAmount('1000000000', 9, 'SOL');
+      expect(result).toBe('1');
+    });
+
+    test('should throw on invalid string raw amounts', () => {
+      expect(() => safeRawToAmount('not-a-number', 9, 'SOL')).toThrow('cannot parse');
+      expect(() => safeRawToAmount('123.45', 9, 'SOL')).toThrow('cannot parse');
+    });
+
+    test('should handle number raw amounts', () => {
+      const result = safeRawToAmount(1000000000, 9, 'SOL');
+      expect(result).toBe('1');
+    });
+
+    test('should throw on unsafe number raw amounts', () => {
+      const unsafeNumber = Number.MAX_SAFE_INTEGER + 1000;
+      expect(() => safeRawToAmount(unsafeNumber, 9, 'SOL')).toThrow('not safe integer');
+    });
+
+    test('should throw on negative raw amounts', () => {
+      expect(() => safeRawToAmount(-1000000n, 9, 'SOL')).toThrow('negative');
+    });
+
+    test('should throw on non-integer number raw amounts', () => {
+      expect(() => safeRawToAmount(123.45, 9, 'SOL')).toThrow('must be non-negative integer');
+    });
+
+    test('should throw on invalid type for raw amount', () => {
+      expect(() => safeRawToAmount(null, 9, 'SOL')).toThrow('must be number, bigint, or string');
+      expect(() => safeRawToAmount(undefined, 9, 'SOL')).toThrow('must be number, bigint, or string');
+      expect(() => safeRawToAmount({}, 9, 'SOL')).toThrow('must be number, bigint, or string');
+    });
+  });
+
   describe('safeRawToAmount - Edge Cases', () => {
     test('should handle very large BigInt amounts', () => {
       // Max safe integer in lamports
@@ -349,6 +397,45 @@ describe('Amount Utils - Integer Overflow Protection', () => {
       // Just over max
       const overMax = MAX_SAFE_AMOUNTS[9] + 0.000000001;
       expect(() => safeAmountToRaw(overMax, 9, 'SOL')).toThrow();
+    });
+  });
+
+  describe('isAmountSafe', () => {
+    test('should return true for safe amounts', () => {
+      expect(isAmountSafe(1, 9, 'SOL')).toBe(true);
+      expect(isAmountSafe(100, 6, 'USDC')).toBe(true);
+      expect(isAmountSafe(0.000001, 9, 'SOL')).toBe(true);
+    });
+
+    test('should return false for unsafe amounts', () => {
+      expect(isAmountSafe(10_000_000_000, 9, 'SOL')).toBe(false);
+      expect(isAmountSafe(-1, 9, 'SOL')).toBe(false);
+      expect(isAmountSafe(Number.MAX_VALUE, 9, 'SOL')).toBe(false);
+    });
+
+    test('should return false for invalid inputs', () => {
+      expect(isAmountSafe(1, -1, 'SOL')).toBe(false);
+      expect(isAmountSafe(1, 20, 'SOL')).toBe(false);
+    });
+  });
+
+  describe('getMaxSafeAmount', () => {
+    test('should return max safe amount for valid decimals', () => {
+      expect(getMaxSafeAmount(0)).toBeGreaterThan(0);
+      expect(getMaxSafeAmount(6)).toBeGreaterThan(0);
+      expect(getMaxSafeAmount(9)).toBeGreaterThan(0);
+      expect(getMaxSafeAmount(18)).toBeGreaterThan(0);
+    });
+
+    test('should return decreasing values for increasing decimals', () => {
+      expect(getMaxSafeAmount(0)).toBeGreaterThan(getMaxSafeAmount(9));
+      expect(getMaxSafeAmount(9)).toBeGreaterThan(getMaxSafeAmount(18));
+    });
+
+    test('should throw on invalid decimals', () => {
+      expect(() => getMaxSafeAmount(-1)).toThrow('Invalid decimals');
+      expect(() => getMaxSafeAmount(19)).toThrow('Invalid decimals');
+      expect(() => getMaxSafeAmount(6.5)).toThrow('Invalid decimals');
     });
   });
 });

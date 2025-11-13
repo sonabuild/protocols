@@ -86,7 +86,102 @@ describe('Wallet Balance Query Schema', () => {
     test('should be marked as proactive', () => {
       expect(balanceQuery.llm.canBeProactive).toBe(true);
     });
+  });
 
+  describe('Card Configuration', () => {
+    test('should generate title for single token balance', () => {
+      const data = {
+        symbol: 'USDC',
+        amount: '100.00',
+        address: '8NrfbE3tvMAbLisd4Dbp7Ja6dmLqdCe3n4Lr9Wq8d9UL'
+      };
+
+      const title = balanceQuery.card.title(data);
+      expect(title).toBe('USDC Balance');
+    });
+
+    test('should generate title for multiple token balances', () => {
+      const data = {
+        balances: {
+          SOL: { amount: '1.5' },
+          USDC: { amount: '100.00' }
+        },
+        address: '8NrfbE3tvMAbLisd4Dbp7Ja6dmLqdCe3n4Lr9Wq8d9UL'
+      };
+
+      const title = balanceQuery.card.title(data);
+      expect(title).toBe('Token Balances');
+    });
+
+    test('should generate title for single token in balances object', () => {
+      const data = {
+        balances: {
+          SOL: { amount: '1.5' }
+        },
+        address: '8NrfbE3tvMAbLisd4Dbp7Ja6dmLqdCe3n4Lr9Wq8d9UL'
+      };
+
+      const title = balanceQuery.card.title(data);
+      expect(title).toBe('Token Balance');
+    });
+
+    test('should generate default title when no data', () => {
+      const data = {};
+      const title = balanceQuery.card.title(data);
+      expect(title).toBe('Wallet Balance');
+    });
+
+    test('should generate subtitle with truncated address', () => {
+      const data = {
+        address: '8NrfbE3tvMAbLisd4Dbp7Ja6dmLqdCe3n4Lr9Wq8d9UL'
+      };
+
+      const subtitle = balanceQuery.card.subtitle(data);
+      expect(subtitle).toBe('8Nrf...d9UL');
+    });
+
+    test('should return null subtitle when no address', () => {
+      const data = {};
+      const subtitle = balanceQuery.card.subtitle(data);
+      expect(subtitle).toBeNull();
+    });
+
+    test('should generate metrics for single token balance', () => {
+      const data = {
+        symbol: 'USDC',
+        amount: '100.00'
+      };
+
+      const metrics = balanceQuery.card.metrics(data);
+      expect(metrics).toHaveLength(1);
+      expect(metrics[0].key).toBe('amount');
+      expect(metrics[0].label).toBe('USDC');
+      expect(metrics[0].suffix).toBe(' USDC');
+      expect(metrics[0].highlight).toBe(true);
+    });
+
+    test('should generate metrics for multiple token balances', () => {
+      const data = {
+        balances: {
+          SOL: { amount: '1.5' },
+          USDC: { amount: '100.00' }
+        }
+      };
+
+      const metrics = balanceQuery.card.metrics(data);
+      expect(metrics).toHaveLength(2);
+      expect(metrics[0].key).toBe('balances.SOL.amount');
+      expect(metrics[0].label).toBe('SOL');
+      expect(metrics[0].value).toBe('1.5');
+      expect(metrics[1].key).toBe('balances.USDC.amount');
+      expect(metrics[1].label).toBe('USDC');
+    });
+
+    test('should return empty array when no balance data', () => {
+      const data = {};
+      const metrics = balanceQuery.card.metrics(data);
+      expect(metrics).toEqual([]);
+    });
   });
 });
 
@@ -276,6 +371,52 @@ describe('Wallet Transfer Operation Schema', () => {
       expect(tool.function.parameters.properties.amount).toBeDefined();
       expect(tool.function.parameters.required).toContain('recipient');
       expect(tool.function.parameters.required).toContain('amount');
+    });
+  });
+
+  describe('Display Data', () => {
+    test('should transform transfer params for UI display', () => {
+      const params = {
+        recipient: '6nmTkHTieHMCFHgq63BovyVSfMsNqrdrwSFtd9mvqR6e',
+        amount: 1_500_000,
+        symbol: 'USDC'
+      };
+      const userPubkey = '8NrfbE3tvMAbLisd4Dbp7Ja6dmLqdCe3n4Lr9Wq8d9UL';
+
+      const displayData = transferOperation.displayData(params, userPubkey);
+
+      expect(displayData).toBeDefined();
+      expect(displayData.transfer).toBeDefined();
+      expect(displayData.transfer.from).toBe(userPubkey);
+      expect(displayData.transfer.to).toBe(params.recipient);
+      expect(displayData.transfer.amount).toBe('1500000');
+      expect(displayData.transfer.symbol).toBe('USDC');
+    });
+
+    test('should default to SOL when symbol not provided', () => {
+      const params = {
+        recipient: '6nmTkHTieHMCFHgq63BovyVSfMsNqrdrwSFtd9mvqR6e',
+        amount: 1_000_000_000 // 1 SOL
+      };
+      const userPubkey = '8NrfbE3tvMAbLisd4Dbp7Ja6dmLqdCe3n4Lr9Wq8d9UL';
+
+      const displayData = transferOperation.displayData(params, userPubkey);
+
+      expect(displayData.transfer.symbol).toBe('SOL');
+    });
+
+    test('should include memo if provided', () => {
+      const params = {
+        recipient: '6nmTkHTieHMCFHgq63BovyVSfMsNqrdrwSFtd9mvqR6e',
+        amount: 1000000,
+        symbol: 'USDC',
+        memo: 'Payment for services'
+      };
+      const userPubkey = '8NrfbE3tvMAbLisd4Dbp7Ja6dmLqdCe3n4Lr9Wq8d9UL';
+
+      const displayData = transferOperation.displayData(params, userPubkey);
+
+      expect(displayData.transfer.memo).toBe('Payment for services');
     });
   });
 });

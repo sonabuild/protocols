@@ -237,6 +237,33 @@ describe('Solend Deposit Operation Schema', () => {
     });
   });
 
+  describe('Display Data', () => {
+    test('should transform params for UI display', () => {
+      const params = { amount: 100_000_000 }; // 100 USDC
+      const displayData = depositOperation.displayData(params);
+
+      expect(displayData).toBeDefined();
+      expect(displayData.deposit).toBeDefined();
+      expect(displayData.deposit.amount).toBe('100.00');
+      expect(displayData.deposit.amountRaw).toBe('100000000');
+      expect(displayData.deposit.tokenSymbol).toBe('USDC');
+      expect(displayData.deposit.tokenMint).toBeDefined();
+    });
+
+    test('should handle different amounts correctly', () => {
+      const testCases = [
+        { amount: 1_000_000, expected: '1.00' },
+        { amount: 50_000_000, expected: '50.00' },
+        { amount: 123_456_789, expected: '123.46' }
+      ];
+
+      for (const { amount, expected } of testCases) {
+        const displayData = depositOperation.displayData({ amount });
+        expect(displayData.deposit.amount).toBe(expected);
+      }
+    });
+  });
+
   // describe('UI Metadata', () => {
   //   test('should have UI rendering hints', () => {
   //     expect(depositOperation.ui).toBeDefined();
@@ -358,6 +385,20 @@ describe('Solend Withdraw Operation Schema', () => {
       // Both should accept same valid context
       expect(depositOperation.validateContext(context).success).toBe(true);
       expect(withdrawOperation.validateContext(context).success).toBe(true);
+    });
+  });
+
+  describe('Display Data', () => {
+    test('should transform params for UI display', () => {
+      const params = { amount: 50_000_000 }; // 50 USDC
+      const displayData = withdrawOperation.displayData(params);
+
+      expect(displayData).toBeDefined();
+      expect(displayData.withdraw).toBeDefined();
+      expect(displayData.withdraw.amount).toBe('50.00');
+      expect(displayData.withdraw.amountRaw).toBe('50000000');
+      expect(displayData.withdraw.tokenSymbol).toBe('USDC');
+      expect(displayData.withdraw.tokenMint).toBeDefined();
     });
   });
 

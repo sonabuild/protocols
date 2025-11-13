@@ -5,7 +5,7 @@
  */
 
 import { describe, test, expect, beforeAll } from 'bun:test';
-import { getTokenBalance } from './balance.js';
+import { getTokenBalance, getMultipleTokenBalances } from './balance.js';
 import { createSolanaRpc } from '@solana/rpc';
 
 describe('Wallet Balance Queries', () => {
@@ -48,6 +48,40 @@ describe('Wallet Balance Queries', () => {
       const wallet = '6nmTkHTieHMCFHgq63BovyVSfMsNqrdrwSFtd9mvqR6e';
 
       const result = await getTokenBalance(rpc, { wallet, symbols: ['SOL', 'USDC'] });
+
+      expect(result).toBeDefined();
+      expect(result.SOL).toBeDefined();
+      expect(result.USDC).toBeDefined();
+      expect(result.SOL.symbol).toBe('SOL');
+      expect(result.USDC.symbol).toBe('USDC');
+    }, 15000);
+  });
+
+  describe('getTokenBalance - All Tokens', () => {
+    test('should fetch all supported tokens when no symbols specified', async () => {
+      const wallet = '6nmTkHTieHMCFHgq63BovyVSfMsNqrdrwSFtd9mvqR6e';
+
+      const result = await getTokenBalance(rpc, { wallet });
+
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('object');
+      // Should have multiple token entries
+      expect(Object.keys(result).length).toBeGreaterThan(1);
+      // Each entry should have balance structure
+      for (const [symbol, balance] of Object.entries(result)) {
+        expect(balance).toBeDefined();
+        expect(balance.symbol).toBe(symbol);
+        expect(balance.amount).toBeDefined();
+        expect(balance.amountRaw).toBeDefined();
+      }
+    }, 30000);
+  });
+
+  describe('getMultipleTokenBalances', () => {
+    test('should work as alias for getTokenBalance', async () => {
+      const wallet = '6nmTkHTieHMCFHgq63BovyVSfMsNqrdrwSFtd9mvqR6e';
+
+      const result = await getMultipleTokenBalances(rpc, wallet, ['SOL', 'USDC']);
 
       expect(result).toBeDefined();
       expect(result.SOL).toBeDefined();
