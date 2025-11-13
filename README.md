@@ -1,5 +1,7 @@
 # @sonabuild/protocols
 
+[![codecov](https://codecov.io/github/sonabuild/protocols/graph/badge.svg?token=FR2020LNJE)](https://codecov.io/github/sonabuild/protocols)
+
 Open-source protocol definitions for building attested Solana transactions.
 
 ## Overview

@@ -30,7 +30,8 @@ jobs:
           SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        if: secrets.CODECOV_TOKEN != ''
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage/lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
