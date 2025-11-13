@@ -18,6 +18,9 @@ export { buildWithdrawTransaction } from './withdraw.js';
  * @param {Object} config.prepared - Derived data from context preparation
  */
 export async function buildSolendTransaction({ context, params, prepared }) {
+  if (!params) {
+    throw new Error('params is undefined in buildSolendTransaction');
+  }
   const operation = params.operation || 'deposit';
 
   if (operation === 'withdraw') {
