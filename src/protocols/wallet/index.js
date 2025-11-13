@@ -25,7 +25,10 @@ export async function prepareContext(operation, config) {
  */
 export async function executeQuery(query, config) {
   if (query === 'balance') {
-    return await getTokenBalance(config.rpc, config.params);
+    return await getTokenBalance(config.rpc, {
+      wallet: config.context.wallet,
+      symbols: config.params.symbols
+    });
   }
   throw new Error(`Unknown Wallet query: ${query}. Available: balance`);
 }
