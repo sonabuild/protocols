@@ -1,6 +1,6 @@
 {
   "name": "@sonabuild/protocols",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "description": "Open-source protocol definitions for Sona attested transactions",
   "author": "Asymmetric Information Inc.",
