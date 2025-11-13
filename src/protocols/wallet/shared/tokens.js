@@ -23,6 +23,13 @@ export const TOKENS = {
     decimals: 6,
     mint: address('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'),
     isNative: false
+  },
+  BONK: {
+    symbol: 'BONK',
+    name: 'Bonk',
+    decimals: 5,
+    mint: address('DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263'),
+    isNative: false
   }
 };
 
