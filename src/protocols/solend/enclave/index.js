@@ -20,12 +20,17 @@ export { buildWithdrawTransaction } from './withdraw.js';
 export async function buildSolendTransaction({ context, params, prepared }) {
   const operation = params.operation || 'deposit';
 
-  const result = operation === 'withdraw'
-    ? buildWithdrawTransaction(params, context, prepared)
-    : buildDepositTransaction(params, context, prepared);
-
-  return {
-    wireTransaction: result.wireTransaction,
-    [operation]: result[operation]
-  };
+  if (operation === 'withdraw') {
+    const result = buildWithdrawTransaction(params, context, prepared);
+    return {
+      wireTransaction: result.wireTransaction,
+      withdraw: result.withdraw
+    };
+  } else {
+    const result = buildDepositTransaction(params, context, prepared);
+    return {
+      wireTransaction: result.wireTransaction,
+      deposit: result.deposit
+    };
+  }
 }
