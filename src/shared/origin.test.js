@@ -142,8 +142,7 @@ describe('Origin Validation - Security', () => {
       process.env.NODE_ENV = 'production';
 
       // Default production origins should be allowed
-      expect(validateOrigin('https://app.sona.fi').valid).toBe(true);
-      expect(validateOrigin('https://sona.fi').valid).toBe(true);
+      expect(validateOrigin('https://sona.build').valid).toBe(true);
 
       // Random origin should be denied
       expect(validateOrigin('https://random.com').valid).toBe(false);
@@ -313,8 +312,7 @@ describe('Origin Validation - Security', () => {
       process.env.NODE_ENV = 'production';
 
       const origins = getAllowedOriginsList();
-      expect(origins).toContain('https://app.sona.fi');
-      expect(origins).toContain('https://sona.fi');
+      expect(origins).toContain('https://sona.build');
       expect(origins).not.toContain('http://localhost:3000');
     });
 
@@ -322,7 +320,7 @@ describe('Origin Validation - Security', () => {
       process.env.NODE_ENV = 'development';
 
       const origins = getAllowedOriginsList();
-      expect(origins).toContain('https://app.sona.fi');
+      expect(origins).toContain('https://sona.build');
       expect(origins).toContain('http://localhost:3000');
       expect(origins).toContain('http://localhost:5173');
       expect(origins).toContain('http://127.0.0.1:3000');
@@ -334,7 +332,7 @@ describe('Origin Validation - Security', () => {
 
       const origins = getAllowedOriginsList();
       expect(origins).toContain('https://custom.com');
-      expect(origins).toContain('https://app.sona.fi');
+      expect(origins).toContain('https://sona.build');
     });
 
     test('should return array of strings', () => {

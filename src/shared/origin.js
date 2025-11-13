@@ -6,8 +6,7 @@
 
 // Default allowed origins for production
 const DEFAULT_ALLOWED_ORIGINS = [
-  'https://app.sona.fi',
-  'https://sona.fi'
+  'https://sona.build'
 ];
 
 // Additional origins for development/testing
