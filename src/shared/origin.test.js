@@ -152,7 +152,7 @@ describe('Origin Validation - Security', () => {
       process.env.NODE_ENV = 'development';
 
       // Production origins
-      expect(validateOrigin('https://app.sona.fi').valid).toBe(true);
+      expect(validateOrigin('https://sona.build').valid).toBe(true);
 
       // Dev origins
       expect(validateOrigin('http://localhost:3000').valid).toBe(true);
@@ -172,7 +172,7 @@ describe('Origin Validation - Security', () => {
       expect(validateOrigin('https://custom2.com').valid).toBe(true);
 
       // Default origins should still be allowed
-      expect(validateOrigin('https://app.sona.fi').valid).toBe(true);
+      expect(validateOrigin('https://sona.build').valid).toBe(true);
       expect(validateOrigin('http://localhost:3000').valid).toBe(true);
     });
 
@@ -232,7 +232,7 @@ describe('Origin Validation - Security', () => {
     test('should not warn about HTTPS in production', () => {
       process.env.NODE_ENV = 'production';
 
-      const result = validateOrigin('https://app.sona.fi');
+      const result = validateOrigin('https://sona.build');
       expect(result.valid).toBe(true);
       expect(result.warning).toBeUndefined();
     });
@@ -464,7 +464,7 @@ describe('Origin Validation - Security', () => {
         },
         {
           wallet: 'DemoWallet1111111111111111111111111111111',
-          origin: 'https://app.sona.fi'
+          origin: 'https://sona.build'
         },
         {
           wallet: 'DemoWallet1111111111111111111111111111111',
