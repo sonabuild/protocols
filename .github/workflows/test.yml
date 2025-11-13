@@ -9,6 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: main
 
     steps:
       - name: Checkout code
@@ -26,6 +27,7 @@ jobs:
         run: bun test --coverage --coverage-reporter=lcov
         env:
           NODE_ENV: test
+          SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
