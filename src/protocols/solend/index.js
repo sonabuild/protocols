@@ -2,9 +2,10 @@
  * Solend Protocol - Standardized API
  */
 
-import { prepareSolendContext } from './context/index.js';
+import { prepareSolendContext, deriveObligationFromWallet } from './context/index.js';
 import { getPosition } from './query/index.js';
 import { solendSchema } from './schema.js';
+import { address } from '@solana/addresses';
 
 /**
  * Prepare context for Solend operation
@@ -25,18 +26,23 @@ export async function prepareContext(operation, config) {
  */
 export async function executeQuery(query, config) {
   if (query === 'positions') {
-    return await getPosition(config.rpc, config.params);
+    const obligationAddress = await deriveObligationFromWallet(address(config.context.wallet));
+    const position = await getPosition(config.rpc, { obligation: obligationAddress });
+
+    const depositedUSDC = position.exists
+      ? (Number(position.deposited) / 1_000_000).toString()
+      : '0';
+
+    return {
+      obligation: String(obligationAddress),
+      exists: position.exists,
+      depositedUSDC,
+      depositedRaw: Number(position.deposited)
+    };
   }
   throw new Error(`Unknown Solend query: ${query}. Available: positions`);
 }
 
-/**
- * Protocol schema
- */
 export const schema = solendSchema;
-
-/**
- * Available operations and queries
- */
 export const operations = ['deposit', 'withdraw'];
 export const queries = ['positions'];

@@ -30,13 +30,6 @@ export async function executeQuery(query, config) {
   throw new Error(`Unknown Wallet query: ${query}. Available: balance`);
 }
 
-/**
- * Protocol schema
- */
 export const schema = walletSchema;
-
-/**
- * Available operations and queries
- */
 export const operations = ['transfer'];
 export const queries = ['balance'];
