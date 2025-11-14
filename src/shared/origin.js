@@ -133,7 +133,7 @@ export function validateOrigin(origin, options = {}) {
       // Exact match
       return origin === allowed;
     } else {
-      // Allow subdomains (e.g., https://test.app.sona.fi matches https://app.sona.fi)
+      // Allow subdomains (e.g., https://test.sona.build matches https://sona.build)
       try {
         const originUrl = new URL(origin);
         const allowedUrl = new URL(allowed);

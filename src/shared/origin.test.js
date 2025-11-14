@@ -85,7 +85,7 @@ describe('Origin Validation - Security', () => {
     });
 
     test('should accept valid HTTPS URLs', () => {
-      expect(validateOrigin('https://app.sona.fi', { allowlist: ['https://app.sona.fi'] }).valid).toBe(true);
+      expect(validateOrigin('https://sona.build', { allowlist: ['https://sona.build'] }).valid).toBe(true);
       expect(validateOrigin('https://example.com', { allowlist: ['https://example.com'] }).valid).toBe(true);
       expect(validateOrigin('https://sub.domain.com', { allowlist: ['https://sub.domain.com'] }).valid).toBe(true);
     });
@@ -100,7 +100,7 @@ describe('Origin Validation - Security', () => {
       process.env.NODE_ENV = 'development';
       expect(validateOrigin('http://localhost:3000').valid).toBe(true);
       expect(validateOrigin('http://localhost:5173').valid).toBe(true);
-      expect(validateOrigin('https://app.sona.fi:443', { allowlist: ['https://app.sona.fi:443'] }).valid).toBe(true);
+      expect(validateOrigin('https://sona.build:443', { allowlist: ['https://sona.build:443'] }).valid).toBe(true);
     });
 
     test('should accept URLs with paths and query strings', () => {
@@ -122,7 +122,7 @@ describe('Origin Validation - Security', () => {
   describe('validateOrigin - Allowlist/Denylist', () => {
     test('should reject origin not in allowlist (strict mode)', () => {
       const result = validateOrigin('https://evil.com', {
-        allowlist: ['https://app.sona.fi'],
+        allowlist: ['https://sona.build'],
         strictMode: true
       });
       expect(result.valid).toBe(false);
@@ -131,8 +131,8 @@ describe('Origin Validation - Security', () => {
     });
 
     test('should accept origin in allowlist (strict mode)', () => {
-      const result = validateOrigin('https://app.sona.fi', {
-        allowlist: ['https://app.sona.fi'],
+      const result = validateOrigin('https://sona.build', {
+        allowlist: ['https://sona.build'],
         strictMode: true
       });
       expect(result.valid).toBe(true);
@@ -185,16 +185,16 @@ describe('Origin Validation - Security', () => {
     });
 
     test('should support subdomain matching in non-strict mode', () => {
-      const result = validateOrigin('https://test.app.sona.fi', {
-        allowlist: ['https://app.sona.fi'],
+      const result = validateOrigin('https://test.sona.build', {
+        allowlist: ['https://sona.build'],
         strictMode: false
       });
       expect(result.valid).toBe(true);
     });
 
     test('should reject subdomain in strict mode', () => {
-      const result = validateOrigin('https://test.app.sona.fi', {
-        allowlist: ['https://app.sona.fi'],
+      const result = validateOrigin('https://test.sona.build', {
+        allowlist: ['https://sona.build'],
         strictMode: true
       });
       expect(result.valid).toBe(false);
@@ -202,8 +202,8 @@ describe('Origin Validation - Security', () => {
 
     test('should match exactly in strict mode (default)', () => {
       // Strict mode is default
-      const result = validateOrigin('https://app.sona.fi:443', {
-        allowlist: ['https://app.sona.fi']
+      const result = validateOrigin('https://sona.build:443', {
+        allowlist: ['https://sona.build']
       });
       expect(result.valid).toBe(false); // Port mismatch
     });
@@ -365,7 +365,7 @@ describe('Origin Validation - Security', () => {
     });
 
     test('should reject non-localhost origins', () => {
-      expect(isLocalhostOrigin('https://app.sona.fi')).toBe(false);
+      expect(isLocalhostOrigin('https://sona.build')).toBe(false);
       expect(isLocalhostOrigin('https://example.com')).toBe(false);
       expect(isLocalhostOrigin('https://192.168.1.1')).toBe(false);
     });
@@ -385,10 +385,10 @@ describe('Origin Validation - Security', () => {
   describe('Real-world Attack Scenarios', () => {
     test('should prevent open redirect via malformed origin', () => {
       const attacks = [
-        'https://app.sona.fi@evil.com',
-        'https://evil.com#app.sona.fi',
-        'https://evil.com?origin=app.sona.fi',
-        'https://app.sona.fi.evil.com'
+        'https://sona.build@evil.com',
+        'https://evil.com#sona.build',
+        'https://evil.com?origin=sona.build',
+        'https://sona.build.evil.com'
       ];
 
       for (const attack of attacks) {
@@ -425,16 +425,16 @@ describe('Origin Validation - Security', () => {
     });
 
     test('should handle URL with null bytes', () => {
-      const withNull = 'https://app.sona.fi\x00evil.com';
+      const withNull = 'https://sona.build\x00evil.com';
       const result = validateOrigin(withNull);
       // Should either fail parsing or fail allowlist
       expect(result.valid).toBe(false);
     });
 
     test('should handle extremely nested subdomains', () => {
-      const nested = 'https://a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.app.sona.fi';
+      const nested = 'https://a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.sona.build';
       const result = validateOrigin(nested, {
-        allowlist: ['https://app.sona.fi'],
+        allowlist: ['https://sona.build'],
         strictMode: true
       });
       expect(result.valid).toBe(false); // Strict mode: no subdomain match
@@ -442,9 +442,9 @@ describe('Origin Validation - Security', () => {
 
     test('should require exact match for security-critical origins', () => {
       // Common attack: adding extra path/query to bypass checks
-      const withPath = 'https://app.sona.fi/../../evil';
+      const withPath = 'https://sona.build/../../evil';
       const result = validateOrigin(withPath, {
-        allowlist: ['https://app.sona.fi'],
+        allowlist: ['https://sona.build'],
         strictMode: true
       });
 

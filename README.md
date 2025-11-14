@@ -310,9 +310,7 @@ const prepared = await solend.prepareContext('deposit', {
 ```
 
 Allowed origins (hardcoded in source):
-- `https://sona.fi`
-- `https://www.sona.fi`
-- `https://app.sona.fi`
+- `https://sona.build`
 - `http://localhost:3000` (development only)
 
 ### Enclave Attestation

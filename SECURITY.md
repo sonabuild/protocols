@@ -46,7 +46,7 @@ We run transaction builders in AWS Nitro Enclaves for security isolation:
 ### Transaction Security
 
 **Origin Validation** (`src/shared/origin.js`)
-- Every transaction is tagged with an origin (e.g., `https://app.sona.fi`)
+- Every transaction is tagged with an origin (e.g., `https://sona.build`)
 - Origins are validated against an allowlist
 - Prevents unauthorized transaction construction
 

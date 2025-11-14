@@ -212,7 +212,7 @@ export class OperationSchema {
         hint: {
           context: {
             wallet: "ExampleWallet1111111111111111111111111111111",
-            origin: "https://app.sona.build"
+            origin: "https://sona.build"
           },
           params: example.params
         },
@@ -350,7 +350,7 @@ export class QuerySchema {
       request: {
         context: {
           wallet: "ExampleWallet1111111111111111111111111111111",
-          origin: "https://app.sona.build"
+          origin: "https://sona.build"
         },
         params: example.params
       },
