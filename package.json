@@ -41,8 +41,8 @@
     "./registry": "./dist/registry.bundle.js"
   },
   "scripts": {
-    "test": "bun test",
-    "test:coverage": "bun test --coverage",
+    "test": "bun test --preload ./tests/setup.js",
+    "test:coverage": "bun test --preload ./tests/setup.js --coverage",
     "build": "mkdir -p dist && bun run build:enclave && bun run build:solend && bun run build:jupiter && bun run build:wallet && bun run build:registry",
     "build:enclave": "bun x esbuild src/enclave.js --bundle --minify --platform=node --target=node20 --format=esm --outfile=dist/enclave.bundle.js --external:node:*",
     "build:solend": "bun x esbuild src/protocols/solend/index.js --bundle --minify --platform=node --target=node20 --format=esm --outfile=dist/solend.bundle.js --external:node:*",
@@ -66,5 +66,8 @@
     "@solana/compat": "^4.0.0",
     "zod": "^3.25.0",
     "zod-to-json-schema": "^3.24.6"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5"
   }
 }

@@ -11,17 +11,12 @@
         "@solana/rpc": "^4.0.0",
         "@solana/transaction-messages": "^4.0.0",
         "@solana/transactions": "^4.0.0",
-      },
-      "optionalDependencies": {
-        "zod": "^3.22.4",
+        "zod": "^3.25.0",
         "zod-to-json-schema": "^3.24.6",
       },
-      "peerDependencies": {
-        "zod": "^3.22.4",
+      "devDependencies": {
+        "dotenv": "^16.4.5",
       },
-      "optionalPeers": [
-        "zod",
-      ],
     },
   },
   "packages": {
@@ -74,6 +69,8 @@
     "chalk": ["chalk@5.6.2", "", {}, "sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA=="],
 
     "commander": ["commander@14.0.1", "", {}, "sha512-2JkV3gUZUVrbNA+1sjBOYLsMZ5cEEl8GTFP2a4AVz5hvasAMCQ1D2l2le/cX+pV4N6ZU17zjUahLpIXRrnWL8A=="],
+
+    "dotenv": ["dotenv@16.6.1", "", {}, "sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow=="],
 
     "fastestsmallesttextencoderdecoder": ["fastestsmallesttextencoderdecoder@1.0.22", "", {}, "sha512-Pb8d48e+oIuY4MaM64Cd7OW1gt4nxCHs7/ddPPZ/Ic3sg8yVGM7O9wDvZ7us6ScaUupzM+pfBolwtYhN1IxBIw=="],
 

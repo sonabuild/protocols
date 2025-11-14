@@ -22,16 +22,7 @@ describe('Jupiter Integration Tests', () => {
       operation: 'swap'
     };
 
-    console.log('Step 1: Preparing context from Jupiter Ultra API...');
     const prepared = await prepareJupiterSwapContext({ rpc, context: userContext, params });
-
-    console.log('Context prepared:');
-    console.log('  - Transaction length:', prepared.transaction?.length);
-    console.log('  - Request ID:', prepared.requestId);
-    console.log('  - Router:', prepared.router);
-    console.log('  - Input amount:', prepared.route.inAmount);
-    console.log('  - Output amount:', prepared.route.outAmount);
-    console.log('  - Price impact:', prepared.route.priceImpactPct);
 
     // Validate context structure
     expect(prepared.transaction).toBeDefined();
@@ -39,12 +30,7 @@ describe('Jupiter Integration Tests', () => {
     expect(prepared.route).toBeDefined();
     expect(prepared.fees).toBeDefined();
 
-    console.log('\nStep 2: Building transaction in enclave format...');
     const result = buildJupiterSwapTransaction(params, userContext, prepared);
-
-    console.log('Transaction built:');
-    console.log('  - Wire transaction length:', result.wireTransaction.length);
-    console.log('  - Swap info:', result.swap);
 
     // Validate result structure
     expect(result.wireTransaction).toBeDefined();
@@ -55,18 +41,14 @@ describe('Jupiter Integration Tests', () => {
     expect(result.swap.route.outputMint).toBe(params.outputMint);
     expect(result.swap.fees).toBeDefined();
 
-    console.log('\nStep 3: Validating transaction format...');
     // The transaction should be base64 encoded
     expect(() => Buffer.from(result.wireTransaction, 'base64')).not.toThrow();
 
     const txBuffer = Buffer.from(result.wireTransaction, 'base64');
-    console.log('  - Transaction buffer length:', txBuffer.length);
     expect(txBuffer.length).toBeGreaterThan(0);
-
-    console.log('\n✅ Integration test passed!');
   }, 60000);
 
-  test('should log full context structure for debugging', async () => {
+  test('should validate full context structure', async () => {
     const rpc = createSolanaRpc(RPC_URL);
 
     const userContext = {
@@ -82,31 +64,25 @@ describe('Jupiter Integration Tests', () => {
 
     const prepared = await prepareJupiterSwapContext({ rpc, context: userContext, params });
 
-    console.log('\n=== FULL CONTEXT STRUCTURE ===');
-    console.log(JSON.stringify({
-      lifetime: {
-        blockhash: prepared.lifetime.blockhash,
-        lastValidBlockHeight: String(prepared.lifetime.lastValidBlockHeight)
-      },
-      userInputAta: String(prepared.userInputAta),
-      userOutputAta: String(prepared.userOutputAta),
-      route: {
-        inputMint: prepared.route.inputMint,
-        outputMint: prepared.route.outputMint,
-        inAmount: prepared.route.inAmount,
-        outAmount: prepared.route.outAmount,
-        priceImpactPct: prepared.route.priceImpactPct,
-        slippageBps: prepared.route.slippageBps,
-        marketInfoCount: prepared.route.marketInfos?.length,
-        marketInfos: prepared.route.marketInfos
-      },
-      transaction: `${prepared.transaction?.substring(0, 50)}... (${prepared.transaction?.length} chars)`,
-      requestId: prepared.requestId,
-      router: prepared.router,
-      swapType: prepared.swapType,
-      fees: prepared.fees
-    }, null, 2));
-
+    // Validate complete context structure
     expect(prepared).toBeDefined();
+    expect(prepared.lifetime).toBeDefined();
+    expect(prepared.lifetime.blockhash).toBeDefined();
+    expect(prepared.lifetime.lastValidBlockHeight).toBeDefined();
+    expect(prepared.userInputAta).toBeDefined();
+    expect(prepared.userOutputAta).toBeDefined();
+    expect(prepared.route).toBeDefined();
+    expect(prepared.route.inputMint).toBe(params.inputMint);
+    expect(prepared.route.outputMint).toBe(params.outputMint);
+    expect(prepared.route.inAmount).toBeDefined();
+    expect(prepared.route.outAmount).toBeDefined();
+    expect(prepared.route.priceImpactPct).toBeDefined();
+    expect(prepared.route.marketInfos).toBeDefined();
+    expect(Array.isArray(prepared.route.marketInfos)).toBe(true);
+    expect(prepared.transaction).toBeDefined();
+    expect(prepared.requestId).toBeDefined();
+    expect(prepared.router).toBeDefined();
+    expect(prepared.swapType).toBeDefined();
+    expect(prepared.fees).toBeDefined();
   }, 60000);
 });

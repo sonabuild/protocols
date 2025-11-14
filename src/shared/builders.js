@@ -35,8 +35,4 @@ export function validateBuiltTransaction(wireTransaction, protocolName, transact
     }
   }
 
-  // Log transaction info in development
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[${protocolName}] Transaction built: ${sizeValidation.size} bytes`);
-  }
 }

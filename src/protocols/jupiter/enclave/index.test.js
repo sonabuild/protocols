@@ -4,7 +4,6 @@ import { buildProtocolTransaction, isSupportedProtocol, getSupportedProtocolIds 
 describe('Jupiter Enclave Registration', () => {
   test('should register Jupiter as a supported protocol', () => {
     const protocols = getSupportedProtocolIds();
-    console.log('Supported protocols:', protocols);
 
     expect(protocols).toContain('jupiter');
     expect(protocols).toContain('solend');
