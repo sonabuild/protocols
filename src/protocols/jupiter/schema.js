@@ -15,7 +15,7 @@ export const JupiterContextSchema = z.object({
     outputMint: z.string(),
     inAmount: z.string().describe('Input amount in lamports'),
     outAmount: z.string().describe('Expected output amount in lamports'),
-    priceImpactPct: z.number().describe('Price impact percentage'),
+    priceImpactPct: z.string().describe('Price impact percentage as string'),
     slippageBps: z.number().optional().describe('Slippage tolerance in basis points'),
     marketInfos: z.array(z.object({
       id: z.string().optional(),
