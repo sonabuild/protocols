@@ -158,7 +158,7 @@ describe('Jupiter Schema', () => {
           outputMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
           inAmount: '1500000000',
           outAmount: '150000000',
-          priceImpactPct: 0.1,
+          priceImpactPct: '0.1',
           slippageBps: 50,
           marketInfos: [
             {
@@ -195,7 +195,7 @@ describe('Jupiter Schema', () => {
           outputMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
           inAmount: '1500000000',
           outAmount: '150000000',
-          priceImpactPct: 0.1,
+          priceImpactPct: '0.1',
           slippageBps: 50,
           marketInfos: []
         },
@@ -239,7 +239,7 @@ describe('Jupiter Schema', () => {
           outputMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
           inAmount: '1500000000',
           outAmount: '150000000',
-          priceImpactPct: 0.1,
+          priceImpactPct: '0.1',
           slippageBps: 50,
           marketInfos: []
         }
