@@ -1,3 +1,7 @@
-export function transformWithdrawOutput(builderOutput) {
-  return builderOutput;
+export function transformWithdrawOutput(enclaveResponse) {
+  // Add success field to enclave response
+  return {
+    success: true,
+    ...enclaveResponse
+  };
 }

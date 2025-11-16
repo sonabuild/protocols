@@ -9,10 +9,13 @@
  * Transform swap builder output
  * For Jupiter swap, we don't need additional transformation
  *
- * @param {object} builderOutput - Output from buildSwapTransaction
- * @returns {object} Transformed output
+ * @param {object} enclaveResponse - Response from enclave (includes transaction, attestation, data, metadata)
+ * @returns {object} Transformed output with success field
  */
-export function transformSwapOutput(builderOutput) {
-  // No transformation needed - pass through
-  return builderOutput;
+export function transformSwapOutput(enclaveResponse) {
+  // Add success field to enclave response
+  return {
+    success: true,
+    ...enclaveResponse
+  };
 }
