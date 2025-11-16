@@ -5,8 +5,10 @@
 
 import jupiterSwap from './protocols/jupiter/swap/index.js';
 import walletTransfer from './protocols/wallet/transfer/index.js';
+import walletBalance from './protocols/wallet/balance/index.js';
 import solendDeposit from './protocols/solend/deposit/index.js';
 import solendWithdraw from './protocols/solend/withdraw/index.js';
+import solendPositions from './protocols/solend/positions/index.js';
 
 /**
  * Protocol registry
@@ -15,8 +17,10 @@ import solendWithdraw from './protocols/solend/withdraw/index.js';
 export const PROTOCOLS = {
   'solend:deposit': solendDeposit,
   'solend:withdraw': solendWithdraw,
+  'solend:positions': solendPositions,
   'jupiter:swap': jupiterSwap,
-  'wallet:transfer': walletTransfer
+  'wallet:transfer': walletTransfer,
+  'wallet:balance': walletBalance
 };
 
 /**
