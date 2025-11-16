@@ -48,8 +48,8 @@ describe('Jupiter Enclave Registration', () => {
 
     const result = await buildProtocolTransaction({
       protocol: 'jupiter',
-      context,
-      params,
+      operation: 'swap',
+      decryptedPayload: { context, params },
       prepared
     });
 
@@ -64,10 +64,13 @@ describe('Jupiter Enclave Registration', () => {
     await expect(async () => {
       await buildProtocolTransaction({
         protocol: 'invalid',
-        context: { wallet: 'test', origin: 'test' },
-        params: {},
+        operation: 'test',
+        decryptedPayload: {
+          context: { wallet: 'test', origin: 'test' },
+          params: {}
+        },
         prepared: {}
       });
-    }).toThrow('Unsupported protocol: invalid');
+    }).toThrow('Unsupported protocol: invalid:test');
   });
 });

@@ -48,7 +48,7 @@ export function listBuilders() {
 }
 
 /**
- * Get supported protocol IDs (backward compatibility - returns unique protocol names)
+ * Get supported protocol IDs (unique protocol names)
  * @returns {Array<string>} Array of protocol names
  */
 export function getSupportedProtocolIds() {
@@ -65,7 +65,7 @@ export function getSupportedProtocolIds() {
 }
 
 /**
- * Check if protocol is supported (backward compatibility - checks if any operation exists for protocol)
+ * Check if protocol is supported
  * @param {string} protocol - Protocol name
  * @returns {boolean}
  */
@@ -77,33 +77,20 @@ export function isSupportedProtocol(protocol) {
  * Build protocol transaction (Pipeline V2)
  * @param {object} params
  * @param {string} params.protocol - Protocol name
- * @param {string} [params.operation] - Operation name (optional for backward compatibility)
- * @param {object} [params.decryptedPayload] - Verified secrets (Pipeline V2 API)
- * @param {object} [params.context] - Context (backward compatibility API)
- * @param {object} params.params - Transaction parameters
+ * @param {string} params.operation - Operation name
+ * @param {object} params.decryptedPayload - Verified secrets from encrypted payload
+ * @param {object} params.decryptedPayload.context - User context (wallet, origin)
+ * @param {object} params.decryptedPayload.params - Operation parameters
  * @param {object} params.prepared - Pre-fetched data from prep stage
  * @param {boolean} [params.includeAttestation] - Whether to include attestation
  * @returns {Promise<object>} { wireTransaction, ...data }
  */
-export async function buildProtocolTransaction({ protocol, operation, decryptedPayload, context, params, prepared, includeAttestation }) {
-  // Backward compatibility: if operation not provided at top level, extract from params
-  let op = operation;
-  let payload = decryptedPayload;
-
-  if (!op && params?.operation) {
-    op = params.operation;
-  }
-
-  // Backward compatibility: if decryptedPayload not provided, construct from context + params
-  if (!payload && context) {
-    payload = { context, params };
-  }
-
-  const builder = getBuilder(protocol, op);
+export async function buildProtocolTransaction({ protocol, operation, decryptedPayload, prepared, includeAttestation }) {
+  const builder = getBuilder(protocol, operation);
 
   if (!builder) {
-    throw new Error(`Unsupported protocol: ${protocol}${op ? ':' + op : ''}`);
+    throw new Error(`Unsupported protocol: ${protocol}:${operation}`);
   }
 
-  return await builder(payload, prepared, includeAttestation);
+  return await builder(decryptedPayload, prepared, includeAttestation);
 }

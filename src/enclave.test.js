@@ -28,11 +28,14 @@ describe('Enclave Protocol Registry', () => {
     expect(async () => {
       await buildProtocolTransaction({
         protocol: 'unsupported',
-        context: { wallet: 'test', origin: 'https://test.com' },
-        params: {},
+        operation: 'test',
+        decryptedPayload: {
+          context: { wallet: 'test', origin: 'https://test.com' },
+          params: {}
+        },
         prepared: {}
       });
-    }).toThrow('Unsupported protocol: unsupported');
+    }).toThrow('Unsupported protocol: unsupported:test');
   });
 });
 
@@ -68,8 +71,11 @@ describe('Enclave Transaction Dispatcher', () => {
 
     const result = await buildProtocolTransaction({
       protocol: 'solend',
-      context: mockContext,
-      params: { operation: 'deposit', amount: 1_000_000 },
+      operation: 'deposit',
+      decryptedPayload: {
+        context: mockContext,
+        params: { amount: 1_000_000 }
+      },
       prepared: mockPrepared
     });
 
@@ -107,8 +113,11 @@ describe('Enclave Transaction Dispatcher', () => {
 
     const result = await buildProtocolTransaction({
       protocol: 'jupiter',
-      context: mockContext,
-      params: { operation: 'swap' },
+      operation: 'swap',
+      decryptedPayload: {
+        context: mockContext,
+        params: {}
+      },
       prepared: mockPrepared
     });
 
@@ -132,11 +141,13 @@ describe('Enclave Transaction Dispatcher', () => {
 
     const result = await buildProtocolTransaction({
       protocol: 'wallet',
-      context: mockContext,
-      params: {
-        operation: 'transfer',
-        recipient: '9PCqHaWG7AFp2C9BfF7AqFb9Tz1PyoMaYB5jGBuGznmL',
-        amount: 1.0
+      operation: 'transfer',
+      decryptedPayload: {
+        context: mockContext,
+        params: {
+          recipient: '9PCqHaWG7AFp2C9BfF7AqFb9Tz1PyoMaYB5jGBuGznmL',
+          amount: 1.0
+        }
       },
       prepared: mockPrepared
     });

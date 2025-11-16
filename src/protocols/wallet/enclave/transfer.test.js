@@ -206,8 +206,8 @@ describe('Wallet Transfer - Enclave Registration', () => {
 
     const result = await buildProtocolTransaction({
       protocol: 'wallet',
-      context,
-      params,
+      operation: 'transfer',
+      decryptedPayload: { context, params },
       prepared
     });
 
