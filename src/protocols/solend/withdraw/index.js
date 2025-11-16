@@ -2,13 +2,19 @@ import { withdrawInputSchema, withdrawEnclaveSchema, withdrawOutputSchema } from
 import { prepareWithdrawInput } from './input.js';
 import { buildWithdrawTransaction } from './enclave.js';
 import { transformWithdrawOutput } from './output.js';
+import { operationInput, enclaveInput, operationResponse } from '../../../shared/schemas.js';
 
 export default {
-  id: 'solend:withdraw',
-  name: 'Solend Withdraw',
-  description: 'Withdraw tokens from Solend',
-  schemas: { input: withdrawInputSchema, enclave: withdrawEnclaveSchema, output: withdrawOutputSchema },
-  prep: prepareWithdrawInput,
-  build: buildWithdrawTransaction,
-  post: transformWithdrawOutput
+  prep: {
+    schema: operationInput(withdrawInputSchema),
+    run: prepareWithdrawInput
+  },
+  build: {
+    schema: enclaveInput(withdrawEnclaveSchema, withdrawInputSchema),
+    run: buildWithdrawTransaction
+  },
+  post: {
+    schema: operationResponse(withdrawOutputSchema),
+    run: transformWithdrawOutput
+  }
 };

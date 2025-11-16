@@ -11,21 +11,19 @@ import { swapInputSchema, swapEnclaveSchema, swapOutputSchema } from './schemas.
 import { prepareSwapInput } from './input.js';
 import { buildSwapTransaction } from './enclave.js';
 import { transformSwapOutput } from './output.js';
+import { operationInput, enclaveInput, operationResponse } from '../../../shared/schemas.js';
 
 export default {
-  id: 'jupiter:swap',
-  name: 'Jupiter Swap',
-  description: 'Swap tokens using Jupiter aggregator with optimal routing',
-
-  // Schemas
-  schemas: {
-    input: swapInputSchema,
-    enclave: swapEnclaveSchema,
-    output: swapOutputSchema
+  prep: {
+    schema: operationInput(swapInputSchema),
+    run: prepareSwapInput
   },
-
-  // Pipeline stages
-  prep: prepareSwapInput,
-  build: buildSwapTransaction,
-  post: transformSwapOutput
+  build: {
+    schema: enclaveInput(swapEnclaveSchema, swapInputSchema),
+    run: buildSwapTransaction
+  },
+  post: {
+    schema: operationResponse(swapOutputSchema),
+    run: transformSwapOutput
+  }
 };

@@ -11,10 +11,10 @@ import solendDeposit from './protocols/solend/deposit/index.js';
 import solendWithdraw from './protocols/solend/withdraw/index.js';
 
 const BUILDERS = {
-  'solend:deposit': solendDeposit.build,
-  'solend:withdraw': solendWithdraw.build,
-  'jupiter:swap': jupiterSwap.build,
-  'wallet:transfer': walletTransfer.build
+  'solend:deposit': solendDeposit.build.run,
+  'solend:withdraw': solendWithdraw.build.run,
+  'jupiter:swap': jupiterSwap.build.run,
+  'wallet:transfer': walletTransfer.build.run
 };
 
 /**

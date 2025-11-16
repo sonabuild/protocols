@@ -2,19 +2,19 @@ import { transferInputSchema, transferEnclaveSchema, transferOutputSchema } from
 import { prepareTransferInput } from './input.js';
 import { buildTransferTransaction } from './enclave.js';
 import { transformTransferOutput } from './output.js';
+import { operationInput, enclaveInput, operationResponse } from '../../../shared/schemas.js';
 
 export default {
-  id: 'wallet:transfer',
-  name: 'Wallet Transfer',
-  description: 'Transfer SOL or SPL tokens',
-
-  schemas: {
-    input: transferInputSchema,
-    enclave: transferEnclaveSchema,
-    output: transferOutputSchema
+  prep: {
+    schema: operationInput(transferInputSchema),
+    run: prepareTransferInput
   },
-
-  prep: prepareTransferInput,
-  build: buildTransferTransaction,
-  post: transformTransferOutput
+  build: {
+    schema: enclaveInput(transferEnclaveSchema, transferInputSchema),
+    run: buildTransferTransaction
+  },
+  post: {
+    schema: operationResponse(transferOutputSchema),
+    run: transformTransferOutput
+  }
 };
