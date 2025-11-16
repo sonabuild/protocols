@@ -52,3 +52,29 @@ export function hasProtocol(protocol, operation) {
 export function listProtocols() {
   return Object.keys(PROTOCOLS);
 }
+
+/**
+ * Export schema metadata for meta endpoint
+ * @returns {object} Schema metadata with routes information
+ */
+export function exportSchemaMetadata() {
+  const routes = {};
+
+  for (const [key, protocol] of Object.entries(PROTOCOLS)) {
+    const [protocolName, operationName] = key.split(':');
+    const type = protocol.build ? 'operation' : 'query';
+
+    routes[`${protocolName}/${operationName}`] = {
+      type,
+      requiresAttestation: type === 'operation',
+      protocol: protocolName,
+      operation: operationName
+    };
+  }
+
+  return {
+    version: '2.0',
+    protocols: listProtocols(),
+    routes
+  };
+}
