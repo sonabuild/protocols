@@ -1,6 +1,6 @@
-import { buildWalletTransferTransaction as legacyBuild } from '../enclave/transfer.js';
+import { buildTransferTransaction as legacyBuild } from '../enclave/transfer.js';
 
 export function buildTransferTransaction(decryptedPayload, preparedData, includeAttestation) {
   const { context, params } = decryptedPayload;
-  return legacyBuild({ context, params, prepared: preparedData });
+  return legacyBuild(params, context, preparedData);
 }

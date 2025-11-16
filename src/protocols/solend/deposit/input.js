@@ -1,6 +1,6 @@
-import { prepareSolendDepositContext } from '../context/index.js';
+import { prepareSolendContext } from '../context/index.js';
 
 export async function prepareDepositInput(input, rpc) {
   const { context, params } = input;
-  return await prepareSolendDepositContext({ rpc, context, params });
+  return await prepareSolendContext({ rpc, context, params });
 }
