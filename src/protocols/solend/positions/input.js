@@ -1,6 +1,14 @@
-// Non-attested read operations for Solend obligations
+/**
+ * Solend Positions - Query Execution (prep stage)
+ *
+ * Queries Solend obligation account to get position data
+ *
+ * IMPORTANT: This runs on the HOST with network access.
+ */
 
-import { address } from '@solana/addresses';
+import { address, createAddressWithSeed } from '@solana/addresses';
+import { validateContextOrigin } from '../../../shared/origin.js';
+import { SOLEND_PROGRAM_ID, MAIN_POOL_MARKET } from '../shared/constants.js';
 
 // Solend Obligation account structure offsets (based on Solend Program v1)
 const OBLIGATION_OFFSETS = {
@@ -16,10 +24,6 @@ const OBLIGATION_OFFSETS = {
 
 /**
  * Validate buffer bounds for obligation parsing
- * @param {Buffer} data - Buffer to validate
- * @param {number} offset - Start offset
- * @param {number} length - Number of bytes to read
- * @returns {boolean} True if bounds are valid
  */
 function isValidObligationBounds(data, offset, length) {
   if (!data || !Buffer.isBuffer(data)) {
@@ -33,10 +37,8 @@ function isValidObligationBounds(data, offset, length) {
 
 /**
  * Parse obligation account data to extract deposit balances
- * @param {Buffer} data - Obligation account data
- * @returns {Object} Parsed obligation with deposits and total
  */
-export function parseObligation(data) {
+function parseObligation(data) {
   // Validate input
   if (!data || !Buffer.isBuffer(data)) {
     console.warn('Invalid obligation data: expected Buffer');
@@ -46,7 +48,7 @@ export function parseObligation(data) {
     };
   }
 
-  // Minimum size check - need at least 204 bytes to read depositsLen
+  // Minimum size check
   if (data.length < OBLIGATION_OFFSETS.MIN_SIZE_FOR_DEPOSITS_LEN) {
     return {
       deposits: [],
@@ -54,7 +56,7 @@ export function parseObligation(data) {
     };
   }
 
-  // Safely read deposits array length at offset 202
+  // Safely read deposits array length
   if (!isValidObligationBounds(data, OBLIGATION_OFFSETS.DEPOSITS_LEN, OBLIGATION_OFFSETS.DEPOSITS_LEN_SIZE)) {
     console.warn('Buffer too small to read depositsLen');
     return {
@@ -65,7 +67,7 @@ export function parseObligation(data) {
 
   const depositsLen = data.readUInt16LE(OBLIGATION_OFFSETS.DEPOSITS_LEN);
 
-  // Validate deposits length is reasonable
+  // Validate deposits length
   if (depositsLen === 0) {
     return {
       deposits: [],
@@ -99,7 +101,7 @@ export function parseObligation(data) {
     const depositOffset = OBLIGATION_OFFSETS.DEPOSITS_START + (i * OBLIGATION_OFFSETS.DEPOSIT_SIZE);
     const amountOffset = depositOffset + OBLIGATION_OFFSETS.DEPOSIT_AMOUNT_OFFSET;
 
-    // Safety check for this specific deposit entry's amount field
+    // Safety check for this specific deposit entry
     if (!isValidObligationBounds(data, amountOffset, OBLIGATION_OFFSETS.DEPOSIT_AMOUNT_SIZE)) {
       console.warn(`Skipping deposit ${i}: insufficient buffer for amount field`);
       break;
@@ -109,8 +111,7 @@ export function parseObligation(data) {
     const depositedAmount = data.readBigUInt64LE(amountOffset);
 
     deposits.push({
-      depositedAmount: depositedAmount.toString(),
-      // Can add more fields here as needed (reserve index, etc.)
+      depositedAmount: depositedAmount.toString()
     });
   }
 
@@ -123,25 +124,67 @@ export function parseObligation(data) {
   };
 }
 
-export async function getPosition(rpc, { obligation }) {
+/**
+ * Derive obligation address from wallet
+ */
+async function deriveObligationFromWallet(walletPubkey) {
+  const obligationSeed = String(MAIN_POOL_MARKET).slice(0, 32);
+  return await createAddressWithSeed({
+    baseAddress: walletPubkey,
+    seed: obligationSeed,
+    programAddress: SOLEND_PROGRAM_ID
+  });
+}
+
+/**
+ * Prepare positions query (prep stage)
+ *
+ * @param {object} input - { context: { wallet, origin }, params: {} }
+ * @param {object} rpc - Solana RPC client
+ * @returns {Promise<object>} Position data matching positionsOutputSchema
+ */
+export async function preparePositionsInput(input, rpc) {
+  const { context } = input;
+
+  // Validate origin
+  const originValidation = validateContextOrigin(context, 'Solend Positions');
+  if (!originValidation.valid) {
+    throw new Error(originValidation.error);
+  }
+  if (originValidation.warning) {
+    console.warn(`[Solend Positions] ${originValidation.warning}`);
+  }
+
+  const userPubkey = address(context.wallet);
+
+  // Derive obligation account
+  const obligationAddress = await deriveObligationFromWallet(userPubkey);
+
+  // Fetch obligation account
   const obligationAccount = await rpc.getAccountInfo(
-    address(obligation),
+    obligationAddress,
     { encoding: 'base64' }
   ).send();
 
   if (!obligationAccount || !obligationAccount.value) {
     return {
+      obligation: String(obligationAddress),
       exists: false,
-      deposited: '0'
+      depositedUSDC: '0',
+      depositedRaw: 0
     };
   }
 
   const data = Buffer.from(obligationAccount.value.data[0], 'base64');
   const parsed = parseObligation(data);
 
+  const depositedUSDC = (Number(parsed.totalDeposited) / 1_000_000).toString();
+
   return {
+    obligation: String(obligationAddress),
     exists: true,
-    deposited: parsed.totalDeposited,
+    depositedUSDC,
+    depositedRaw: Number(parsed.totalDeposited),
     deposits: parsed.deposits
   };
 }

@@ -1,9 +1,18 @@
-// Token balance queries via Solana RPC
+/**
+ * Wallet Balance - Query Execution (prep stage)
+ *
+ * Executes balance query via Solana RPC
+ *
+ * IMPORTANT: This runs on the HOST with network access.
+ */
 
 import { address } from '@solana/addresses';
+import { validateContextOrigin } from '../../../shared/origin.js';
 import { getToken, getSupportedTokens } from '../shared/tokens.js';
 
-// Internal helper - takes positional args
+/**
+ * Internal helper - fetches balance for a single token
+ */
 async function _getTokenBalance(rpc, walletAddress, symbol) {
   const token = getToken(symbol);
   const owner = address(walletAddress);
@@ -52,47 +61,45 @@ async function _getTokenBalance(rpc, walletAddress, symbol) {
   };
 }
 
-// Public API - matches schema format
-export async function getTokenBalance(rpc, { wallet, symbols }) {
+/**
+ * Prepare balance query (prep stage)
+ *
+ * @param {object} input - { context: { wallet, origin }, params: { symbols? } }
+ * @param {object} rpc - Solana RPC client
+ * @returns {Promise<object>} Balance data matching balanceOutputSchema
+ */
+export async function prepareBalanceInput(input, rpc) {
+  const { context, params } = input;
+
+  // Validate origin
+  const originValidation = validateContextOrigin(context, 'Wallet Balance');
+  if (!originValidation.valid) {
+    throw new Error(originValidation.error);
+  }
+  if (originValidation.warning) {
+    console.warn(`[Wallet Balance] ${originValidation.warning}`);
+  }
+
+  const { symbols } = params;
+
   // Single token query
   if (symbols && symbols.length === 1) {
-    return await _getTokenBalance(rpc, wallet, symbols[0]);
+    return await _getTokenBalance(rpc, context.wallet, symbols[0]);
   }
 
-  // Multiple tokens
-  if (symbols && symbols.length > 1) {
-    const balances = {};
-    await Promise.all(
-      symbols.map(async (symbol) => {
-        try {
-          balances[symbol] = await _getTokenBalance(rpc, wallet, symbol);
-        } catch (error) {
-          console.error(`Failed to fetch ${symbol} balance:`, error.message);
-        }
-      })
-    );
-    return balances;
-  }
-
-  // All tokens
-  const allSymbols = getSupportedTokens();
+  // Multiple tokens (or all tokens if symbols not provided)
+  const tokensToQuery = symbols && symbols.length > 0 ? symbols : getSupportedTokens();
   const balances = {};
+
   await Promise.all(
-    allSymbols.map(async (symbol) => {
+    tokensToQuery.map(async (symbol) => {
       try {
-        balances[symbol] = await _getTokenBalance(rpc, wallet, symbol);
+        balances[symbol] = await _getTokenBalance(rpc, context.wallet, symbol);
       } catch (error) {
         console.error(`Failed to fetch ${symbol} balance:`, error.message);
       }
     })
   );
+
   return balances;
-}
-
-export async function getMultipleTokenBalances(rpc, walletAddress, symbols) {
-  return getTokenBalance(rpc, { wallet: walletAddress, symbols });
-}
-
-export async function getAllTokenBalances(rpc, walletAddress) {
-  return getTokenBalance(rpc, { wallet: walletAddress });
 }
