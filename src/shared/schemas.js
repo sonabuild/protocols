@@ -68,3 +68,156 @@ export const BlockhashLifetime = z.object({
     .describe('Recent Solana blockhash'),
   lastValidBlockHeight: z.bigint().describe('Last valid block height for this blockhash')
 }).describe('Blockhash with lifetime information for transaction validity');
+
+/**
+ * Base context schema used everywhere
+ */
+export const baseContextSchema = z.object({
+  wallet: SolanaAddress.describe('User wallet public key'),
+  origin: z.string().url().describe('Request origin URL')
+});
+
+/**
+ * Pipeline V2 Schema Wrapper Functions
+ *
+ * These helpers wrap business schemas with infrastructure fields,
+ * following the DRY principle - protocols define only business logic.
+ */
+
+/**
+ * Wraps business input schema for operations (encrypted payloads)
+ *
+ * @param {ZodSchema} inputSchema - Business parameters schema
+ * @returns {ZodSchema} Full operation input schema
+ *
+ * @example
+ * const swapInputSchema = z.object({
+ *   inputMint: SolanaAddress,
+ *   outputMint: SolanaAddress,
+ *   amount: z.number().positive()
+ * });
+ * const fullSchema = operationInput(swapInputSchema);
+ * // Validates: { encrypted, hint: { context, params }, includeAttestation }
+ */
+export function operationInput(inputSchema) {
+  return z.object({
+    encrypted: z.string().describe('Sealed box encrypted payload'),
+    hint: z.object({
+      context: baseContextSchema,
+      params: inputSchema
+    }).describe('Plaintext hint for hint verification'),
+    includeAttestation: z.boolean().optional().describe('Whether to include attestation in response')
+  });
+}
+
+/**
+ * Wraps business input schema for queries (plaintext)
+ *
+ * @param {ZodSchema} inputSchema - Business parameters schema
+ * @returns {ZodSchema} Full query input schema
+ *
+ * @example
+ * const balanceInputSchema = z.object({
+ *   mint: SolanaAddress
+ * });
+ * const fullSchema = queryInput(balanceInputSchema);
+ * // Validates: { context: { wallet, origin }, params: { mint } }
+ */
+export function queryInput(inputSchema) {
+  return z.object({
+    context: baseContextSchema,
+    params: inputSchema
+  });
+}
+
+/**
+ * Wraps schemas for enclave input validation
+ *
+ * @param {ZodSchema} enclaveSchema - Schema for preparedData (primary validation target)
+ * @param {ZodSchema} inputSchema - Schema for hint.params (secondary validation)
+ * @returns {ZodSchema} Full enclave input schema
+ *
+ * Parameter order rationale:
+ * - enclaveSchema FIRST: Primary validation target (preparedData)
+ * - inputSchema SECOND: Used for hint validation (secondary)
+ *
+ * @example
+ * const swapEnclaveSchema = z.object({
+ *   lifetime: BlockhashLifetime,
+ *   userInputAta: SolanaAddress,
+ *   transaction: WireTransaction
+ * });
+ * const fullSchema = enclaveInput(swapEnclaveSchema, swapInputSchema);
+ * // Validates preparedData matches swapEnclaveSchema
+ */
+export function enclaveInput(enclaveSchema, inputSchema) {
+  return z.object({
+    encrypted: z.string(),
+    hint: z.object({
+      context: baseContextSchema,
+      params: inputSchema
+    }),
+    includeAttestation: z.boolean().optional(),
+    preparedData: enclaveSchema.describe('Validated data from prep step')
+  });
+}
+
+/**
+ * Wraps business output schema for operation responses
+ *
+ * @param {ZodSchema} outputSchema - Business output data schema
+ * @returns {ZodSchema} Full operation response schema
+ *
+ * @example
+ * const swapOutputSchema = z.object({
+ *   route: z.object({ ... }),
+ *   fees: z.object({ ... })
+ * });
+ * const fullSchema = operationResponse(swapOutputSchema);
+ * // Validates: { success, transaction, attestation?, metadata?, data?, error? }
+ */
+export function operationResponse(outputSchema) {
+  return z.object({
+    success: z.boolean(),
+    transaction: z.string().optional().describe('Base64 encoded signed transaction'),
+    attestation: z.object({
+      signature: z.string().describe('Attestation signature'),
+      pcrs: z.record(z.string()).describe('Platform Configuration Registers')
+    }).optional(),
+    metadata: z.object({
+      protocol: z.string(),
+      operation: z.string(),
+      timestamp: z.number()
+    }).optional(),
+    data: outputSchema.optional(),
+    error: z.string().nullable().optional()
+  });
+}
+
+/**
+ * Wraps business output schema for query responses
+ *
+ * @param {ZodSchema} outputSchema - Business output data schema
+ * @returns {ZodSchema} Full query response schema
+ *
+ * @example
+ * const balanceOutputSchema = z.object({
+ *   symbol: z.string(),
+ *   amount: z.string(),
+ *   decimals: z.number()
+ * });
+ * const fullSchema = queryResponse(balanceOutputSchema);
+ * // Validates: { success, metadata?, data?, error? }
+ */
+export function queryResponse(outputSchema) {
+  return z.object({
+    success: z.boolean(),
+    metadata: z.object({
+      protocol: z.string(),
+      query: z.string(),
+      timestamp: z.number()
+    }).optional(),
+    data: outputSchema.optional(),
+    error: z.string().nullable().optional()
+  });
+}
