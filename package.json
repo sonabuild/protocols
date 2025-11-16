@@ -35,24 +35,20 @@
   ],
   "exports": {
     "./enclave": "./dist/enclave.bundle.js",
-    "./enclave-v2": "./dist/enclave-v2.bundle.js",
     "./solend": "./dist/solend.bundle.js",
     "./jupiter": "./dist/jupiter.bundle.js",
     "./wallet": "./dist/wallet.bundle.js",
-    "./registry": "./dist/registry.bundle.js",
-    "./registry-v2": "./dist/registry-v2.bundle.js"
+    "./registry": "./dist/registry.bundle.js"
   },
   "scripts": {
     "test": "bun test --preload ./tests/setup.js",
     "test:coverage": "bun test --preload ./tests/setup.js --coverage",
-    "build": "mkdir -p dist && bun run build:enclave && bun run build:enclave-v2 && bun run build:solend && bun run build:jupiter && bun run build:wallet && bun run build:registry && bun run build:registry-v2",
+    "build": "mkdir -p dist && bun run build:enclave && bun run build:solend && bun run build:jupiter && bun run build:wallet && bun run build:registry",
     "build:enclave": "bun x esbuild src/enclave.js --bundle --minify --platform=node --target=node20 --format=esm --outfile=dist/enclave.bundle.js --external:node:*",
-    "build:enclave-v2": "bun x esbuild src/enclave-v2.js --bundle --minify --platform=node --target=node20 --format=esm --outfile=dist/enclave-v2.bundle.js --external:node:*",
     "build:solend": "bun x esbuild src/protocols/solend/index.js --bundle --minify --platform=node --target=node20 --format=esm --outfile=dist/solend.bundle.js --external:node:*",
     "build:jupiter": "bun x esbuild src/protocols/jupiter/index.js --bundle --minify --platform=node --target=node20 --format=esm --outfile=dist/jupiter.bundle.js --external:node:*",
     "build:wallet": "bun x esbuild src/protocols/wallet/index.js --bundle --minify --platform=node --target=node20 --format=esm --outfile=dist/wallet.bundle.js --external:node:*",
     "build:registry": "bun x esbuild src/registry.js --bundle --minify --platform=node --target=node20 --format=esm --outfile=dist/registry.bundle.js --external:node:*",
-    "build:registry-v2": "bun x esbuild src/registry-v2.js --bundle --minify --platform=node --target=node20 --format=esm --outfile=dist/registry-v2.bundle.js --external:node:*",
     "build:check": "bun --eval \"Promise.all([import('./dist/enclave.bundle.js'), import('./dist/solend.bundle.js'), import('./dist/jupiter.bundle.js'), import('./dist/wallet.bundle.js'), import('./dist/registry.bundle.js')]).then(() => console.log('✓ All bundles import successfully')).catch(e => { console.error('✗ Bundle import failed:', e.message); process.exit(1); })\"",
     "clean": "rm -rf dist",
     "prepublishOnly": "bun test && bun run build && bun run build:check",

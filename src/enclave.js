@@ -1,36 +1,109 @@
 /**
- * Enclave-safe protocol registry
+ * Pipeline V2 Enclave Registry
  *
- * Only imports transaction builders - no RPC code.
- * Use this entry point in the enclave instead of the main index.
+ * Only imports transaction builders - no RPC code
+ * Use this entry point in the enclave
  */
 
-import { buildSolendTransaction } from './protocols/solend/enclave/index.js';
-import { buildJupiterTransaction } from './protocols/jupiter/enclave/index.js';
-import { buildWalletTransaction } from './protocols/wallet/enclave/index.js';
+import jupiterSwap from './protocols/jupiter/swap/index.js';
+import walletTransfer from './protocols/wallet/transfer/index.js';
+import solendDeposit from './protocols/solend/deposit/index.js';
+import solendWithdraw from './protocols/solend/withdraw/index.js';
 
-const builders = new Map([
-  ['solend', buildSolendTransaction],
-  ['jupiter', buildJupiterTransaction],
-  ['wallet', buildWalletTransaction]
-]);
+const BUILDERS = {
+  'solend:deposit': solendDeposit.build,
+  'solend:withdraw': solendWithdraw.build,
+  'jupiter:swap': jupiterSwap.build,
+  'wallet:transfer': walletTransfer.build
+};
 
-function getBuilderOrThrow(id) {
-  if (!builders.has(id)) {
-    throw new Error(`Unsupported protocol: ${id}`);
-  }
-  return builders.get(id);
+/**
+ * Get builder function
+ * @param {string} protocol - Protocol name
+ * @param {string} operation - Operation name
+ * @returns {Function|null} Builder function or null
+ */
+export function getBuilder(protocol, operation) {
+  const key = `${protocol}:${operation}`;
+  return BUILDERS[key] || null;
 }
 
+/**
+ * Check if builder exists
+ * @param {string} protocol - Protocol name
+ * @param {string} operation - Operation name
+ * @returns {boolean}
+ */
+export function hasBuilder(protocol, operation) {
+  const key = `${protocol}:${operation}`;
+  return key in BUILDERS;
+}
+
+/**
+ * List supported protocols
+ * @returns {Array<string>} Array of "protocol:operation" strings
+ */
+export function listBuilders() {
+  return Object.keys(BUILDERS);
+}
+
+/**
+ * Get supported protocol IDs (backward compatibility - returns unique protocol names)
+ * @returns {Array<string>} Array of protocol names
+ */
 export function getSupportedProtocolIds() {
-  return Array.from(builders.keys());
+  const protocols = [];
+  const seen = new Set();
+  for (const key of Object.keys(BUILDERS)) {
+    const [protocol] = key.split(':');
+    if (!seen.has(protocol)) {
+      seen.add(protocol);
+      protocols.push(protocol);
+    }
+  }
+  return protocols;
 }
 
-export function isSupportedProtocol(id) {
-  return builders.has(id);
+/**
+ * Check if protocol is supported (backward compatibility - checks if any operation exists for protocol)
+ * @param {string} protocol - Protocol name
+ * @returns {boolean}
+ */
+export function isSupportedProtocol(protocol) {
+  return getSupportedProtocolIds().includes(protocol);
 }
 
-export async function buildProtocolTransaction({ protocol, context, params, prepared }) {
-  const builder = getBuilderOrThrow(protocol);
-  return builder({ context, params, prepared });
+/**
+ * Build protocol transaction (Pipeline V2)
+ * @param {object} params
+ * @param {string} params.protocol - Protocol name
+ * @param {string} [params.operation] - Operation name (optional for backward compatibility)
+ * @param {object} [params.decryptedPayload] - Verified secrets (Pipeline V2 API)
+ * @param {object} [params.context] - Context (backward compatibility API)
+ * @param {object} params.params - Transaction parameters
+ * @param {object} params.prepared - Pre-fetched data from prep stage
+ * @param {boolean} [params.includeAttestation] - Whether to include attestation
+ * @returns {Promise<object>} { wireTransaction, ...data }
+ */
+export async function buildProtocolTransaction({ protocol, operation, decryptedPayload, context, params, prepared, includeAttestation }) {
+  // Backward compatibility: if operation not provided at top level, extract from params
+  let op = operation;
+  let payload = decryptedPayload;
+
+  if (!op && params?.operation) {
+    op = params.operation;
+  }
+
+  // Backward compatibility: if decryptedPayload not provided, construct from context + params
+  if (!payload && context) {
+    payload = { context, params };
+  }
+
+  const builder = getBuilder(protocol, op);
+
+  if (!builder) {
+    throw new Error(`Unsupported protocol: ${protocol}${op ? ':' + op : ''}`);
+  }
+
+  return await builder(payload, prepared, includeAttestation);
 }
