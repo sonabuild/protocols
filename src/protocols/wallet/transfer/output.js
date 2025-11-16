@@ -1,3 +1,7 @@
-export function transformTransferOutput(builderOutput) {
-  return builderOutput;
+export function transformTransferOutput(enclaveResponse) {
+  // Add success field to enclave response
+  return {
+    success: true,
+    ...enclaveResponse
+  };
 }
