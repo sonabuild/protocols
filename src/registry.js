@@ -66,7 +66,7 @@ export function exportSchemaMetadata() {
 
     routes[`${protocolName}/${operationName}`] = {
       type,
-      requiresAttestation: type === 'operation',
+      attested: type === 'operation',  // Kit expects 'attested', not 'requiresAttestation'
       protocol: protocolName,
       operation: operationName
     };
