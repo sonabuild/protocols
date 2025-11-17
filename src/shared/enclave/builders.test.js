@@ -20,7 +20,7 @@ describe('Builder Utils', () => {
       const oversizedTx = Buffer.alloc(1300).toString('base64');
 
       expect(() => validateBuiltTransaction(oversizedTx, 'Test Protocol', null))
-        .toThrow(/too large/);
+        .toThrow(/exceeds maximum/);
     });
 
     test('should include protocol name in error', () => {

@@ -1,5 +1,9 @@
 /**
- * Safe Amount Conversion Utilities
+ * Enclave-Safe Amount Conversion Utilities
+ *
+ * SECURITY NOTE: This file is bundled into the enclave.
+ * Only include minimal, audited code with NO external dependencies.
+ * NO network access, NO filesystem access, NO logging to external services.
  *
  * Provides overflow-safe conversions between human-readable amounts
  * and blockchain raw units (lamports, smallest token units, etc.)
@@ -84,11 +88,12 @@ export function safeAmountToRaw(amount, decimals, tokenSymbol = 'token') {
 }
 
 /**
- * Safely convert raw units to human-readable amount
+ * Convert raw units to human-readable amount (returns string for precision)
  * @param {number|bigint|string} rawAmount - Raw amount in smallest units
  * @param {number} decimals - Number of decimals
  * @param {string} tokenSymbol - Token symbol for error messages
- * @returns {string} Human-readable amount as string (to preserve precision)
+ * @returns {string} Human-readable amount as string (for precision)
+ * @throws {Error} If inputs are invalid
  */
 export function safeRawToAmount(rawAmount, decimals, tokenSymbol = 'token') {
   // Validate decimals
@@ -97,70 +102,90 @@ export function safeRawToAmount(rawAmount, decimals, tokenSymbol = 'token') {
   }
 
   // Convert to BigInt if needed
-  let raw;
+  let bigIntAmount;
+
   if (typeof rawAmount === 'bigint') {
-    raw = rawAmount;
+    bigIntAmount = rawAmount;
   } else if (typeof rawAmount === 'string') {
     try {
-      raw = BigInt(rawAmount);
-    } catch (e) {
-      throw new Error(`Invalid raw amount for ${tokenSymbol}: cannot parse "${rawAmount}" as BigInt`);
+      bigIntAmount = BigInt(rawAmount);
+    } catch (error) {
+      throw new Error(`Invalid raw amount for ${tokenSymbol}: cannot parse string "${rawAmount}" as BigInt`);
     }
   } else if (typeof rawAmount === 'number') {
     if (!Number.isSafeInteger(rawAmount)) {
-      throw new Error(`Invalid raw amount for ${tokenSymbol}: ${rawAmount} is not safe integer`);
+      throw new Error(`Invalid raw amount for ${tokenSymbol}: number ${rawAmount} is not safe integer`);
     }
-    if (rawAmount < 0) {
-      throw new Error(`Invalid raw amount for ${tokenSymbol}: must be non-negative integer, got ${rawAmount}`);
-    }
-    raw = BigInt(rawAmount);
+    bigIntAmount = BigInt(rawAmount);
   } else {
     throw new Error(`Invalid raw amount for ${tokenSymbol}: must be number, bigint, or string, got ${typeof rawAmount}`);
   }
 
-  // Validate raw amount is non-negative
-  if (raw < 0n) {
-    throw new Error(`Invalid raw amount for ${tokenSymbol}: must be non-negative, got ${raw}`);
+  // Check for negative
+  if (bigIntAmount < 0n) {
+    throw new Error(`Invalid raw amount for ${tokenSymbol}: must be non-negative, got ${bigIntAmount}`);
   }
 
-  // Convert using string manipulation to avoid precision loss
-  const divisor = BigInt(Math.pow(10, decimals));
-  const wholePart = raw / divisor;
-  const fractionalPart = raw % divisor;
+  // Perform conversion using string manipulation for precision
+  const rawStr = bigIntAmount.toString();
+  const divisor = 10 ** decimals;
 
-  // Pad fractional part with leading zeros
-  const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
-
-  // Remove trailing zeros from fractional part
-  const trimmedFractional = fractionalStr.replace(/0+$/, '');
-
-  if (trimmedFractional === '') {
-    return wholePart.toString();
-  } else {
-    return `${wholePart}.${trimmedFractional}`;
+  if (decimals === 0) {
+    return rawStr;
   }
+
+  // Pad with leading zeros if needed
+  const paddedStr = rawStr.padStart(decimals + 1, '0');
+  const integerPart = paddedStr.slice(0, -decimals) || '0';
+  const decimalPart = paddedStr.slice(-decimals);
+
+  // Remove trailing zeros from decimal part
+  const trimmedDecimal = decimalPart.replace(/0+$/, '');
+
+  if (trimmedDecimal === '') {
+    return integerPart;
+  }
+
+  return `${integerPart}.${trimmedDecimal}`;
 }
 
 /**
- * Validate that an amount is within safe bounds
- * @param {number} amount - Amount to validate
+ * Check if an amount is safe for conversion
+ * @param {number} amount - Human-readable amount
  * @param {number} decimals - Number of decimals
  * @param {string} tokenSymbol - Token symbol for error messages
  * @returns {boolean} True if amount is safe
  */
 export function isAmountSafe(amount, decimals, tokenSymbol = 'token') {
   try {
-    safeAmountToRaw(amount, decimals, tokenSymbol);
+    // Validate inputs
+    if (typeof amount !== 'number' || isNaN(amount) || !Number.isFinite(amount)) {
+      return false;
+    }
+    if (amount < 0) {
+      return false;
+    }
+    if (!Number.isInteger(decimals) || decimals < 0 || decimals > 18) {
+      return false;
+    }
+
+    // Check if amount would cause overflow
+    const maxSafeAmount = MAX_SAFE_AMOUNTS[decimals];
+    if (amount > maxSafeAmount) {
+      return false;
+    }
+
     return true;
-  } catch (e) {
+  } catch (error) {
     return false;
   }
 }
 
 /**
- * Get maximum safe amount for a given decimal count
+ * Get the maximum safe amount for a given number of decimals
  * @param {number} decimals - Number of decimals
  * @returns {number} Maximum safe amount
+ * @throws {Error} If decimals is invalid
  */
 export function getMaxSafeAmount(decimals) {
   if (!Number.isInteger(decimals) || decimals < 0 || decimals > 18) {

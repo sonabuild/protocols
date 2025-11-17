@@ -1,15 +1,6 @@
-/**
- * Jupiter Swap - Business Schemas (Pipeline V2)
- *
- * Business schemas only - no infrastructure wrappers
- * Uses shared helpers for Solana-specific types
- */
 import { z } from 'zod';
 import { SolanaAddress, BlockhashLifetime, WireTransaction } from '../../../shared/schemas.js';
 
-/**
- * Input schema - what the user provides
- */
 export const swapInputSchema = z.object({
   inputMint: SolanaAddress
     .describe('Input token mint address on Solana. Common tokens: SOL=So11111111111111111111111111111111111111112, USDC=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
@@ -29,10 +20,6 @@ export const swapInputSchema = z.object({
     .describe('Slippage tolerance in basis points (50 = 0.5%, 100 = 1%)'),
 });
 
-/**
- * Enclave schema - what prep step returns
- * This is the prepared data from Jupiter Ultra API
- */
 export const swapEnclaveSchema = z.object({
   lifetime: BlockhashLifetime,
 
@@ -76,13 +63,7 @@ export const swapEnclaveSchema = z.object({
   }).optional()
 });
 
-/**
- * Output schema - what the builder returns
- * Includes wireTransaction + protocol-specific data
- */
 export const swapOutputSchema = z.object({
-  wireTransaction: WireTransaction,
-
   swap: z.object({
     route: z.object({
       inputMint: SolanaAddress,

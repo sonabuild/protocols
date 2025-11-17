@@ -1,15 +1,6 @@
-/**
- * Solend Withdraw - Business Schemas (Pipeline V2)
- *
- * Business schemas only - no infrastructure wrappers
- * Uses shared helpers for Solana-specific types
- */
 import { z } from 'zod';
 import { SolanaAddress, BlockhashLifetime, WireTransaction } from '../../../shared/schemas.js';
 
-/**
- * Input schema - what the user provides
- */
 export const withdrawInputSchema = z.object({
   amount: z.number()
     .positive()
@@ -24,9 +15,6 @@ export const withdrawInputSchema = z.object({
     .describe('Token symbol (optional, defaults to USDC)')
 });
 
-/**
- * Enclave schema - what prep step returns (same as deposit)
- */
 export const withdrawEnclaveSchema = z.object({
   lifetime: BlockhashLifetime,
 
@@ -60,12 +48,7 @@ export const withdrawEnclaveSchema = z.object({
   }).describe('Pre-fetched Solend account data')
 });
 
-/**
- * Output schema - what the builder returns
- */
 export const withdrawOutputSchema = z.object({
-  wireTransaction: WireTransaction,
-
   withdraw: z.object({
     amount: z.string().describe('Amount withdrawn in token units'),
     amountRaw: z.string().describe('Amount withdrawn in lamports'),

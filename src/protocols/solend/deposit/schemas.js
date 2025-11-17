@@ -1,15 +1,6 @@
-/**
- * Solend Deposit - Business Schemas (Pipeline V2)
- *
- * Business schemas only - no infrastructure wrappers
- * Uses shared helpers for Solana-specific types
- */
 import { z } from 'zod';
 import { SolanaAddress, BlockhashLifetime, WireTransaction } from '../../../shared/schemas.js';
 
-/**
- * Input schema - what the user provides
- */
 export const depositInputSchema = z.object({
   amount: z.number()
     .positive()
@@ -24,9 +15,6 @@ export const depositInputSchema = z.object({
     .describe('Token symbol (optional, defaults to USDC)')
 });
 
-/**
- * Enclave schema - what prep step returns
- */
 export const depositEnclaveSchema = z.object({
   lifetime: BlockhashLifetime,
 
@@ -60,12 +48,7 @@ export const depositEnclaveSchema = z.object({
   }).describe('Pre-fetched Solend account data')
 });
 
-/**
- * Output schema - what the builder returns
- */
 export const depositOutputSchema = z.object({
-  wireTransaction: WireTransaction,
-
   deposit: z.object({
     amount: z.string().describe('Amount deposited in token units'),
     amountRaw: z.string().describe('Amount deposited in lamports'),

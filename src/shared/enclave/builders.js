@@ -1,7 +1,9 @@
 /**
- * Common utilities for transaction builders
+ * Enclave-Safe Transaction Builder Utilities
  *
- * Provides validation and helper functions used across protocol builders
+ * SECURITY NOTE: This file is bundled into the enclave.
+ * Only include minimal, audited code with NO external dependencies.
+ * NO network access, NO filesystem access, NO logging to external services.
  */
 
 import { validateTransactionSize, validateInstructionCount } from './transactions.js';
@@ -34,5 +36,4 @@ export function validateBuiltTransaction(wireTransaction, protocolName, transact
       console.warn(`[${protocolName}] ${countValidation.warning}`);
     }
   }
-
 }

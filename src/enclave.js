@@ -1,10 +1,3 @@
-/**
- * Pipeline V2 Enclave Registry
- *
- * Only imports transaction builders - no RPC code
- * Use this entry point in the enclave
- */
-
 import jupiterSwap from './protocols/jupiter/swap/index.js';
 import walletTransfer from './protocols/wallet/transfer/index.js';
 import solendDeposit from './protocols/solend/deposit/index.js';
@@ -73,18 +66,6 @@ export function isSupportedProtocol(protocol) {
   return getSupportedProtocolIds().includes(protocol);
 }
 
-/**
- * Build protocol transaction (Pipeline V2)
- * @param {object} params
- * @param {string} params.protocol - Protocol name
- * @param {string} params.operation - Operation name
- * @param {object} params.decryptedPayload - Verified secrets from encrypted payload
- * @param {object} params.decryptedPayload.context - User context (wallet, origin)
- * @param {object} params.decryptedPayload.params - Operation parameters
- * @param {object} params.prepared - Pre-fetched data from prep stage
- * @param {boolean} [params.includeAttestation] - Whether to include attestation
- * @returns {Promise<object>} { wireTransaction, ...data }
- */
 export async function buildProtocolTransaction({ protocol, operation, decryptedPayload, prepared, includeAttestation }) {
   const builder = getBuilder(protocol, operation);
 

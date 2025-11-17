@@ -1,14 +1,3 @@
-/**
- * Wallet Transfer - Transaction Builder (build stage)
- *
- * PURE FUNCTION - NO SIDE EFFECTS
- * - No network access
- * - No file system access
- * - Builds transactions for transferring SOL or SPL tokens
- *
- * This runs inside the AWS Nitro Enclave with attestation.
- */
-
 import { address } from '@solana/addresses';
 import {
   createTransactionMessage,
@@ -19,22 +8,19 @@ import {
 import { pipe } from '@solana/functional';
 import { AccountRole } from '@solana/instructions';
 import { compileTransaction, getBase64EncodedWireTransaction } from '@solana/transactions';
-import { validateBuiltTransaction } from '../../../shared/builders.js';
+import { validateBuiltTransaction } from '../../../shared/enclave/builders.js';
 import { getToken, TOKENS } from '../shared/tokens.js';
-import { safeAmountToRaw } from '../../../shared/amounts.js';
+import { safeAmountToRaw } from '../../../shared/enclave/amounts.js';
 
 const SYSTEM_PROGRAM_ID = address('11111111111111111111111111111111');
 const TOKEN_PROGRAM_ID = address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const MEMO_PROGRAM_ID = address('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 
-/**
- * Build SOL transfer instruction
- */
 function buildSolTransferInstruction(from, to, lamports) {
   const data = new Uint8Array(12);
   const view = new DataView(data.buffer);
-  view.setUint32(0, 2, true); // Transfer instruction
-  view.setBigUint64(4, BigInt(lamports), true); // Amount
+  view.setUint32(0, 2, true);
+  view.setBigUint64(4, BigInt(lamports), true);
 
   return {
     programAddress: SYSTEM_PROGRAM_ID,
@@ -46,14 +32,11 @@ function buildSolTransferInstruction(from, to, lamports) {
   };
 }
 
-/**
- * Build SPL token transfer instruction
- */
 function buildTokenTransferInstruction(from, to, owner, amount) {
   const data = new Uint8Array(9);
-  data[0] = 3; // Transfer instruction
+  data[0] = 3;
   const view = new DataView(data.buffer);
-  view.setBigUint64(1, BigInt(amount), true); // Amount
+  view.setBigUint64(1, BigInt(amount), true);
 
   return {
     programAddress: TOKEN_PROGRAM_ID,
@@ -66,9 +49,6 @@ function buildTokenTransferInstruction(from, to, owner, amount) {
   };
 }
 
-/**
- * Build memo instruction
- */
 function buildMemoInstruction(memo) {
   const encoder = new TextEncoder();
   const data = encoder.encode(memo);
@@ -80,16 +60,6 @@ function buildMemoInstruction(memo) {
   };
 }
 
-/**
- * Build transfer transaction (build stage)
- *
- * @param {object} decryptedPayload - Verified secrets from encrypted payload
- * @param {object} decryptedPayload.context - User context {wallet, origin}
- * @param {object} decryptedPayload.params - Transfer params
- * @param {object} prepared - Pre-fetched data from prep stage
- * @param {boolean} includeAttestation - Whether to include attestation
- * @returns {object} { wireTransaction, transfer: {...} }
- */
 export function buildTransferTransaction(decryptedPayload, prepared, includeAttestation) {
   const { context, params } = decryptedPayload;
   const userPubkey = address(context.wallet);
@@ -121,7 +91,7 @@ export function buildTransferTransaction(decryptedPayload, prepared, includeAtte
       throw new Error(`Amount conversion failed for ${symbol}: ${error.message}`);
     }
 
-    if (!senderTokenAccount || !recipientTokenAccount) {
+    if (!token.isNative && (!senderTokenAccount || !recipientTokenAccount)) {
       throw new Error('Token accounts must be provided for SPL token transfers');
     }
   } else {
@@ -139,7 +109,7 @@ export function buildTransferTransaction(decryptedPayload, prepared, includeAtte
     (tx) => setTransactionMessageLifetimeUsingBlockhash(lifetime, tx)
   );
 
-  if (params.mint || params.symbol) {
+  if (token && !token.isNative) {
     const transferInstruction = buildTokenTransferInstruction(
       address(senderTokenAccount),
       address(recipientTokenAccount),
@@ -171,7 +141,7 @@ export function buildTransferTransaction(decryptedPayload, prepared, includeAtte
       from: String(userPubkey),
       to: String(recipient),
       amount: amountRaw.toString(),
-      mint: params.mint,
+      ...(params.mint ? { mint: params.mint } : {}),
       symbol
     }
   };

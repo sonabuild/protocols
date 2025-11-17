@@ -1,12 +1,3 @@
-/**
- * Jupiter Swap Protocol - Pipeline V2
- *
- * 3-stage pipeline:
- * 1. prep: Fetch route from Jupiter API (input.js)
- * 2. build: Validate and return pre-built transaction (enclave.js)
- * 3. post: Transform output (output.js)
- */
-
 import { swapInputSchema, swapEnclaveSchema, swapOutputSchema } from './schemas.js';
 import { prepareSwapInput } from './input.js';
 import { buildSwapTransaction } from './enclave.js';

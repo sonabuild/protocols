@@ -1,15 +1,3 @@
-/**
- * Solend Deposit - Input Preparation (prep stage)
- *
- * Prepares context for Solend deposits:
- * - Fetches latest blockhash
- * - Derives obligation account
- * - Derives token accounts (USDC and cUSDC)
- * - Fetches Solend reserve and lending market data
- *
- * IMPORTANT: This runs on the HOST (not in enclave) with network access.
- */
-
 import { address, getAddressEncoder, getProgramDerivedAddress, createAddressWithSeed } from '@solana/addresses';
 import { validateContextOrigin } from '../../../shared/origin.js';
 import {
@@ -23,9 +11,6 @@ import {
 
 const ASSOCIATED_TOKEN_PROGRAM_ID = address('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
-/**
- * Derive Associated Token Address
- */
 async function getAssociatedTokenAddress(mint, owner) {
   const encoder = getAddressEncoder();
   const seeds = [
@@ -42,9 +27,6 @@ async function getAssociatedTokenAddress(mint, owner) {
   return ata;
 }
 
-/**
- * Check which addresses exist on-chain
- */
 async function checkAccountsExist(rpc, addresses) {
   const result = await rpc.getMultipleAccounts(addresses).send();
 
@@ -57,17 +39,9 @@ async function checkAccountsExist(rpc, addresses) {
   return existsMap;
 }
 
-/**
- * Prepare deposit input (prep stage)
- *
- * @param {object} input - { context: { wallet, origin }, params: { amount, mint?, symbol? } }
- * @param {object} rpc - Solana RPC client
- * @returns {Promise<object>} Prepared data matching depositEnclaveSchema
- */
 export async function prepareDepositInput(input, rpc) {
   const { context, params } = input;
 
-  // Validate origin
   const originValidation = validateContextOrigin(context, 'Solend Deposit');
   if (!originValidation.valid) {
     throw new Error(originValidation.error);
@@ -78,7 +52,6 @@ export async function prepareDepositInput(input, rpc) {
 
   const userPubkey = address(context.wallet);
 
-  // 1. Fetch latest blockhash
   const { value: latestBlockhash } = await rpc
     .getLatestBlockhash({ commitment: 'finalized' })
     .send();
@@ -88,7 +61,6 @@ export async function prepareDepositInput(input, rpc) {
     lastValidBlockHeight: latestBlockhash.lastValidBlockHeight
   };
 
-  // 2. Fetch Solend reserve + lending market accounts
   const [reserveResult, lendingMarketResult] = await Promise.all([
     rpc.getAccountInfo(USDC_RESERVE, { encoding: 'base64' }).send(),
     rpc.getAccountInfo(MAIN_POOL_MARKET, { encoding: 'base64' }).send()
@@ -102,18 +74,13 @@ export async function prepareDepositInput(input, rpc) {
     throw new Error(`Solend lending market account not found: ${MAIN_POOL_MARKET}`);
   }
 
-  // Extract account data
   const reserveData = Buffer.from(reserveResult.value.data[0], 'base64');
   const lendingMarketData = Buffer.from(lendingMarketResult.value.data[0], 'base64');
 
-  // 3. Derive user token accounts
   const userUsdcAta = await getAssociatedTokenAddress(USDC_MINT, userPubkey);
   const userCusdcAta = await getAssociatedTokenAddress(CUSDC_MINT, userPubkey);
 
-  // Check which ATAs exist
   const ataExists = await checkAccountsExist(rpc, [userUsdcAta, userCusdcAta]);
-
-  // 4. Derive obligation account (Solend uses createAddressWithSeed)
   const obligationSeed = String(MAIN_POOL_MARKET).slice(0, 32);
   const obligationAddress = await createAddressWithSeed({
     baseAddress: userPubkey,

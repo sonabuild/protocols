@@ -1,25 +1,11 @@
-/**
- * Jupiter Swap - Input Preparation (prep stage)
- *
- * Handles all network operations:
- * - Fetches latest blockhash
- * - Calls Jupiter Ultra API for swap route
- * - Derives token accounts
- *
- * IMPORTANT: This runs on the HOST (not in enclave) with network access.
- */
-
 import { address, getAddressEncoder, getProgramDerivedAddress } from '@solana/addresses';
 import { validateContextOrigin } from '../../../shared/origin.js';
-import { safeAmountToRaw } from '../../../shared/amounts.js';
+import { safeAmountToRaw } from '../../../shared/enclave/amounts.js';
 
 const JUPITER_ULTRA_API = process.env.JUPITER_API_URL || 'https://lite-api.jup.ag/ultra/v1';
 const TOKEN_PROGRAM_ID = address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const ASSOCIATED_TOKEN_PROGRAM_ID = address('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
-/**
- * Derive Associated Token Address
- */
 async function getAssociatedTokenAddress(mint, owner) {
   const encoder = getAddressEncoder();
   const seeds = [
@@ -36,23 +22,17 @@ async function getAssociatedTokenAddress(mint, owner) {
   return ata;
 }
 
-/**
- * Get token decimals for known tokens
- */
 function getTokenDecimals(mint) {
   const knownDecimals = {
-    'So11111111111111111111111111111111111111112': 9, // SOL
-    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 6, // USDC
-    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': 6, // USDT
-    'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN': 6, // JUP
-    'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': 5  // BONK
+    'So11111111111111111111111111111111111111112': 9,
+    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 6,
+    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': 6,
+    'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN': 6,
+    'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': 5
   };
   return knownDecimals[mint] || 9;
 }
 
-/**
- * Get token symbol from mint address
- */
 function getMintSymbol(mint) {
   const knownSymbols = {
     'So11111111111111111111111111111111111111112': 'SOL',
@@ -64,17 +44,9 @@ function getMintSymbol(mint) {
   return knownSymbols[mint] || mint.slice(0, 4) + '...' + mint.slice(-4);
 }
 
-/**
- * Prepare swap input (prep stage)
- *
- * @param {object} input - { context: { wallet, origin }, params: { inputMint, outputMint, amount, slippageBps } }
- * @param {object} rpc - Solana RPC client
- * @returns {Promise<object>} Prepared data matching swapEnclaveSchema
- */
 export async function prepareSwapInput(input, rpc) {
   const { context, params } = input;
 
-  // Validate origin
   const originValidation = validateContextOrigin(context, 'Jupiter Swap');
   if (!originValidation.valid) {
     throw new Error(originValidation.error);
@@ -86,12 +58,9 @@ export async function prepareSwapInput(input, rpc) {
   const { inputMint, outputMint, amount, slippageBps = 50 } = params;
   const userAddress = address(context.wallet);
 
-  // 1. Fetch latest blockhash
   const { value: lifetime } = await rpc
     .getLatestBlockhash({ commitment: 'finalized' })
     .send();
-
-  // 2. Convert amount to lamports with overflow protection
   const inputMintAddr = address(inputMint);
   const outputMintAddr = address(outputMint);
   const inputDecimals = getTokenDecimals(inputMint);
@@ -104,7 +73,6 @@ export async function prepareSwapInput(input, rpc) {
     throw new Error(`Amount conversion failed for ${inputSymbol}: ${error.message}`);
   }
 
-  // 3. Call Jupiter Ultra API
   const orderUrl = new URL(`${JUPITER_ULTRA_API}/order`);
   orderUrl.searchParams.set('inputMint', inputMint);
   orderUrl.searchParams.set('outputMint', outputMint);
@@ -114,10 +82,18 @@ export async function prepareSwapInput(input, rpc) {
     orderUrl.searchParams.set('slippageBps', slippageBps.toString());
   }
 
+  console.log(`[Jupiter] Calling Ultra API: ${orderUrl.toString()}`);
   const orderResponse = await fetch(orderUrl.toString());
-  const orderData = await orderResponse.json();
 
-  // Validate Jupiter API response
+  if (!orderResponse.ok) {
+    const errorText = await orderResponse.text();
+    console.error(`[Jupiter] API error ${orderResponse.status}:`, errorText);
+    throw new Error(`Jupiter API error ${orderResponse.status}: ${errorText}`);
+  }
+
+  const orderData = await orderResponse.json();
+  console.log(`[Jupiter] API response:`, JSON.stringify(orderData, null, 2));
+
   if (!orderData || typeof orderData !== 'object') {
     throw new Error('Jupiter API returned invalid response');
   }
@@ -131,7 +107,6 @@ export async function prepareSwapInput(input, rpc) {
     throw new Error('No transaction returned from Jupiter order');
   }
 
-  // Validate transaction format
   if (typeof orderData.transaction !== 'string' || orderData.transaction.length === 0) {
     throw new Error('Invalid transaction format');
   }
@@ -149,13 +124,14 @@ export async function prepareSwapInput(input, rpc) {
     throw new Error(`Invalid base64 transaction: ${error.message}`);
   }
 
-  // 4. Derive user token accounts
   const userInputAta = await getAssociatedTokenAddress(inputMintAddr, userAddress);
   const userOutputAta = await getAssociatedTokenAddress(outputMintAddr, userAddress);
 
-  // 5. Return prepared data (matches swapEnclaveSchema)
   return {
-    lifetime,
+    lifetime: {
+      blockhash: lifetime.blockhash,
+      lastValidBlockHeight: BigInt(lifetime.lastValidBlockHeight)
+    },
     userInputAta,
     userOutputAta,
     route: {
