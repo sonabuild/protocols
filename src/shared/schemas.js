@@ -77,6 +77,12 @@ export const baseContextSchema = z.object({
   origin: z.string().url().describe('Request origin URL')
 });
 
+/**
+ * Wraps business input schema for attested operations.
+ * Adds encryption envelope and attestation flag to user parameters.
+ * @param {ZodSchema} inputSchema - Business parameters schema
+ * @returns {ZodSchema} Full operation input schema with encryption wrapper
+ */
 export function operationInput(inputSchema) {
   return z.object({
     encrypted: z.string().describe('Sealed box encrypted payload'),
@@ -88,6 +94,12 @@ export function operationInput(inputSchema) {
   });
 }
 
+/**
+ * Wraps business input schema for non-attested queries.
+ * Queries use plaintext (no encryption) since they don't produce transactions.
+ * @param {ZodSchema} inputSchema - Business parameters schema
+ * @returns {ZodSchema} Full query input schema with context
+ */
 export function queryInput(inputSchema) {
   return z.object({
     context: baseContextSchema,
@@ -95,6 +107,13 @@ export function queryInput(inputSchema) {
   });
 }
 
+/**
+ * Wraps schemas for enclave input validation.
+ * Validates both prepared data (primary) and decrypted payload (secondary).
+ * @param {ZodSchema} enclaveSchema - Schema for prep stage output
+ * @param {ZodSchema} inputSchema - Schema for user parameters
+ * @returns {ZodSchema} Full enclave input schema
+ */
 export function enclaveInput(enclaveSchema, inputSchema) {
   return z.object({
     encrypted: z.string(),
@@ -107,6 +126,12 @@ export function enclaveInput(enclaveSchema, inputSchema) {
   });
 }
 
+/**
+ * Wraps business output schema for operation responses.
+ * Adds transaction, attestation, and metadata fields to operation data.
+ * @param {ZodSchema} outputSchema - Business operation output schema
+ * @returns {ZodSchema} Full operation response schema
+ */
 export function operationResponse(outputSchema) {
   return z.object({
     success: z.boolean(),
@@ -126,19 +151,10 @@ export function operationResponse(outputSchema) {
 }
 
 /**
- * Wraps business output schema for query responses
- *
- * @param {ZodSchema} outputSchema - Business output data schema
+ * Wraps business output schema for query responses.
+ * Queries return data without transactions or attestations.
+ * @param {ZodSchema} outputSchema - Business query output schema
  * @returns {ZodSchema} Full query response schema
- *
- * @example
- * const balanceOutputSchema = z.object({
- *   symbol: z.string(),
- *   amount: z.string(),
- *   decimals: z.number()
- * });
- * const fullSchema = queryResponse(balanceOutputSchema);
- * // Validates: { success, metadata?, data?, error? }
  */
 export function queryResponse(outputSchema) {
   return z.object({

@@ -115,31 +115,31 @@ describe('Protocol Registry', () => {
 
     test('should format routes with protocol/operation key format', () => {
       const metadata = exportSchemaMetadata();
-      expect(metadata.routes).toHaveProperty('jupiter/swap');
-      expect(metadata.routes).toHaveProperty('wallet/transfer');
-      expect(metadata.routes).toHaveProperty('wallet/balance');
-      expect(metadata.routes).toHaveProperty('solend/deposit');
+      expect(metadata.routes).toHaveProperty('/jupiter/swap');
+      expect(metadata.routes).toHaveProperty('/wallet/transfer');
+      expect(metadata.routes).toHaveProperty('/wallet/balance');
+      expect(metadata.routes).toHaveProperty('/solend/deposit');
     });
 
     test('should mark operations (with build) as attested', () => {
       const metadata = exportSchemaMetadata();
-      expect(metadata.routes['jupiter/swap'].type).toBe('operation');
-      expect(metadata.routes['jupiter/swap'].attested).toBe(true);
-      expect(metadata.routes['wallet/transfer'].type).toBe('operation');
-      expect(metadata.routes['wallet/transfer'].attested).toBe(true);
+      expect(metadata.routes['/jupiter/swap'].type).toBe('operation');
+      expect(metadata.routes['/jupiter/swap'].attested).toBe(true);
+      expect(metadata.routes['/wallet/transfer'].type).toBe('operation');
+      expect(metadata.routes['/wallet/transfer'].attested).toBe(true);
     });
 
     test('should mark queries (without build) as non-attested', () => {
       const metadata = exportSchemaMetadata();
-      expect(metadata.routes['wallet/balance'].type).toBe('query');
-      expect(metadata.routes['wallet/balance'].attested).toBe(false);
-      expect(metadata.routes['solend/positions'].type).toBe('query');
-      expect(metadata.routes['solend/positions'].attested).toBe(false);
+      expect(metadata.routes['/wallet/balance'].type).toBe('query');
+      expect(metadata.routes['/wallet/balance'].attested).toBe(false);
+      expect(metadata.routes['/solend/positions'].type).toBe('query');
+      expect(metadata.routes['/solend/positions'].attested).toBe(false);
     });
 
     test('should include protocol and operation in each route', () => {
       const metadata = exportSchemaMetadata();
-      const jupiterSwap = metadata.routes['jupiter/swap'];
+      const jupiterSwap = metadata.routes['/jupiter/swap'];
       expect(jupiterSwap.protocol).toBe('jupiter');
       expect(jupiterSwap.operation).toBe('swap');
     });

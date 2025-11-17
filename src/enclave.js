@@ -3,6 +3,10 @@ import walletTransfer from './protocols/wallet/transfer/index.js';
 import solendDeposit from './protocols/solend/deposit/index.js';
 import solendWithdraw from './protocols/solend/withdraw/index.js';
 
+/**
+ * Registry mapping protocol:operation keys to transaction builder functions.
+ * Only includes attested operations - queries are handled separately.
+ */
 const BUILDERS = {
   'solend:deposit': solendDeposit.build.run,
   'solend:withdraw': solendWithdraw.build.run,
@@ -66,6 +70,18 @@ export function isSupportedProtocol(protocol) {
   return getSupportedProtocolIds().includes(protocol);
 }
 
+/**
+ * Builds an attested transaction for the specified protocol operation.
+ * Executes in the enclave with no network access.
+ * @param {Object} params - Build parameters
+ * @param {string} params.protocol - Protocol name
+ * @param {string} params.operation - Operation name
+ * @param {Object} params.decryptedPayload - Verified user request
+ * @param {Object} params.prepared - Pre-fetched data from prep stage
+ * @param {boolean} params.includeAttestation - Whether to include attestation
+ * @returns {Promise<Object>} Transaction data { wireTransaction, ...operationData }
+ * @throws {Error} If protocol:operation is not supported
+ */
 export async function buildProtocolTransaction({ protocol, operation, decryptedPayload, prepared, includeAttestation }) {
   const builder = getBuilder(protocol, operation);
 

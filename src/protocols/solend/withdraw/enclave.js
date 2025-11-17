@@ -21,6 +21,16 @@ import {
   INSTRUCTION
 } from '../shared/constants.js';
 
+/**
+ * Builds a Solend withdraw transaction in the enclave.
+ * Pure function with no side effects - runs in attested environment.
+ * @param {Object} decryptedPayload - Decrypted user request
+ * @param {Object} decryptedPayload.context - User context (wallet, origin)
+ * @param {Object} decryptedPayload.params - Withdraw params (amount)
+ * @param {Object} prepared - Pre-fetched data from prep stage
+ * @param {boolean} includeAttestation - Whether attestation is requested
+ * @returns {Object} Transaction data { wireTransaction, withdraw }
+ */
 export function buildWithdrawTransaction(decryptedPayload, prepared, includeAttestation) {
   const { context, params } = decryptedPayload;
   const { lifetime, userUsdcAta, userCusdcAta, obligationAccount } = prepared;

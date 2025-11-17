@@ -5,6 +5,12 @@ import { getToken } from '../shared/tokens.js';
 const TOKEN_PROGRAM_ID = address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const ASSOCIATED_TOKEN_PROGRAM_ID = address('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
+/**
+ * Derives the associated token account address for a given mint and owner.
+ * @param {Address} mint - Token mint address
+ * @param {Address} owner - Token account owner address
+ * @returns {Promise<Address>} Associated token account address
+ */
 async function getAssociatedTokenAddress(mint, owner) {
   const encoder = getAddressEncoder();
   const seeds = [
@@ -21,6 +27,15 @@ async function getAssociatedTokenAddress(mint, owner) {
   return ata;
 }
 
+/**
+ * Prepares wallet transfer by fetching blockhash and deriving token accounts.
+ * Runs on host with network access before enclave execution.
+ * @param {Object} input - Transfer request
+ * @param {Object} input.context - User context (wallet, origin)
+ * @param {Object} input.params - Transfer parameters (recipient, amount, mint?, symbol?, memo?)
+ * @param {Object} rpc - Solana RPC client
+ * @returns {Promise<Object>} Prepared data for enclave (lifetime, token accounts)
+ */
 export async function prepareTransferInput(input, rpc) {
   const { context, params } = input;
 

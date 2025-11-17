@@ -56,7 +56,9 @@ describe('Jupiter Swap - Input Preparation', () => {
 
   test('should prepare swap with valid Jupiter API response', async () => {
     globalThis.fetch = mock(async () => ({
-      json: async () => mockJupiterResponse
+      ok: true,
+      json: async () => mockJupiterResponse,
+      text: async () => JSON.stringify(mockJupiterResponse)
     }));
 
     const input = {
@@ -88,7 +90,9 @@ describe('Jupiter Swap - Input Preparation', () => {
     globalThis.fetch = mock(async (url) => {
       expect(url.includes('slippageBps=50')).toBe(true);
       return {
-        json: async () => mockJupiterResponse
+        ok: true,
+        json: async () => mockJupiterResponse,
+        text: async () => JSON.stringify(mockJupiterResponse)
       };
     });
 
@@ -109,9 +113,11 @@ describe('Jupiter Swap - Input Preparation', () => {
 
   test('should throw error for Jupiter API error response', async () => {
     globalThis.fetch = mock(async () => ({
+      ok: true,
       json: async () => ({
         error: 'Insufficient liquidity'
-      })
+      }),
+      text: async () => JSON.stringify({ error: 'Insufficient liquidity' })
     }));
 
     const input = {
@@ -131,9 +137,11 @@ describe('Jupiter Swap - Input Preparation', () => {
 
   test('should throw error for insufficient funds (errorCode 1)', async () => {
     globalThis.fetch = mock(async () => ({
+      ok: true,
       json: async () => ({
         errorCode: 1
-      })
+      }),
+      text: async () => JSON.stringify({ errorCode: 1 })
     }));
 
     const input = {
@@ -153,9 +161,11 @@ describe('Jupiter Swap - Input Preparation', () => {
 
   test('should throw error for insufficient SOL (errorCode 2)', async () => {
     globalThis.fetch = mock(async () => ({
+      ok: true,
       json: async () => ({
         errorCode: 2
-      })
+      }),
+      text: async () => JSON.stringify({ errorCode: 2 })
     }));
 
     const input = {
@@ -175,9 +185,11 @@ describe('Jupiter Swap - Input Preparation', () => {
 
   test('should throw error for minimum swap amount not met (errorCode 3)', async () => {
     globalThis.fetch = mock(async () => ({
+      ok: true,
       json: async () => ({
         errorCode: 3
-      })
+      }),
+      text: async () => JSON.stringify({ errorCode: 3 })
     }));
 
     const input = {
@@ -197,9 +209,11 @@ describe('Jupiter Swap - Input Preparation', () => {
 
   test('should throw error for invalid transaction format', async () => {
     globalThis.fetch = mock(async () => ({
+      ok: true,
       json: async () => ({
         transaction: ''
-      })
+      }),
+      text: async () => JSON.stringify({ transaction: '' })
     }));
 
     const input = {
@@ -219,9 +233,11 @@ describe('Jupiter Swap - Input Preparation', () => {
 
   test('should throw error for transaction too small', async () => {
     globalThis.fetch = mock(async () => ({
+      ok: true,
       json: async () => ({
         transaction: 'YQ==' // 'a' in base64 (1 byte)
-      })
+      }),
+      text: async () => JSON.stringify({ transaction: 'YQ==' })
     }));
 
     const input = {
@@ -257,7 +273,9 @@ describe('Jupiter Swap - Input Preparation', () => {
 
   test('should handle localhost origin in development', async () => {
     globalThis.fetch = mock(async () => ({
-      json: async () => mockJupiterResponse
+      ok: true,
+      json: async () => mockJupiterResponse,
+      text: async () => JSON.stringify(mockJupiterResponse)
     }));
 
     const input = {
@@ -278,9 +296,11 @@ describe('Jupiter Swap - Input Preparation', () => {
 
   test('should throw error for invalid base64 transaction', async () => {
     globalThis.fetch = mock(async () => ({
+      ok: true,
       json: async () => ({
         transaction: 'not-valid-base64!!!!'
-      })
+      }),
+      text: async () => JSON.stringify({ transaction: 'not-valid-base64!!!!' })
     }));
 
     const input = {

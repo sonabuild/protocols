@@ -6,6 +6,12 @@ const JUPITER_ULTRA_API = process.env.JUPITER_API_URL || 'https://lite-api.jup.a
 const TOKEN_PROGRAM_ID = address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const ASSOCIATED_TOKEN_PROGRAM_ID = address('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
+/**
+ * Derives the associated token account address for a given mint and owner.
+ * @param {Address} mint - Token mint address
+ * @param {Address} owner - Token account owner address
+ * @returns {Promise<Address>} Associated token account address
+ */
 async function getAssociatedTokenAddress(mint, owner) {
   const encoder = getAddressEncoder();
   const seeds = [
@@ -22,6 +28,11 @@ async function getAssociatedTokenAddress(mint, owner) {
   return ata;
 }
 
+/**
+ * Returns known token decimals or defaults to 9.
+ * @param {string} mint - Token mint address
+ * @returns {number} Token decimals
+ */
 function getTokenDecimals(mint) {
   const knownDecimals = {
     'So11111111111111111111111111111111111111112': 9,
@@ -33,6 +44,11 @@ function getTokenDecimals(mint) {
   return knownDecimals[mint] || 9;
 }
 
+/**
+ * Returns known token symbol or abbreviated address.
+ * @param {string} mint - Token mint address
+ * @returns {string} Token symbol
+ */
 function getMintSymbol(mint) {
   const knownSymbols = {
     'So11111111111111111111111111111111111111112': 'SOL',
@@ -44,6 +60,15 @@ function getMintSymbol(mint) {
   return knownSymbols[mint] || mint.slice(0, 4) + '...' + mint.slice(-4);
 }
 
+/**
+ * Prepares Jupiter swap by calling Ultra API and deriving token accounts.
+ * Runs on host with network access before enclave execution.
+ * @param {Object} input - Swap request
+ * @param {Object} input.context - User context (wallet, origin)
+ * @param {Object} input.params - Swap parameters (inputMint, outputMint, amount, slippageBps)
+ * @param {Object} rpc - Solana RPC client
+ * @returns {Promise<Object>} Prepared data for enclave (lifetime, route, transaction, token accounts)
+ */
 export async function prepareSwapInput(input, rpc) {
   const { context, params } = input;
 

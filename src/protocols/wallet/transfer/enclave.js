@@ -16,6 +16,13 @@ const SYSTEM_PROGRAM_ID = address('11111111111111111111111111111111');
 const TOKEN_PROGRAM_ID = address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const MEMO_PROGRAM_ID = address('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 
+/**
+ * Builds a native SOL transfer instruction.
+ * @param {Address} from - Sender address
+ * @param {Address} to - Recipient address
+ * @param {number} lamports - Amount in lamports
+ * @returns {Object} System program transfer instruction
+ */
 function buildSolTransferInstruction(from, to, lamports) {
   const data = new Uint8Array(12);
   const view = new DataView(data.buffer);
@@ -32,6 +39,14 @@ function buildSolTransferInstruction(from, to, lamports) {
   };
 }
 
+/**
+ * Builds an SPL token transfer instruction.
+ * @param {Address} from - Source token account
+ * @param {Address} to - Destination token account
+ * @param {Address} owner - Token account owner (signer)
+ * @param {number} amount - Amount in token base units
+ * @returns {Object} Token program transfer instruction
+ */
 function buildTokenTransferInstruction(from, to, owner, amount) {
   const data = new Uint8Array(9);
   data[0] = 3;
@@ -49,6 +64,11 @@ function buildTokenTransferInstruction(from, to, owner, amount) {
   };
 }
 
+/**
+ * Builds a memo instruction.
+ * @param {string} memo - Memo text
+ * @returns {Object} Memo program instruction
+ */
 function buildMemoInstruction(memo) {
   const encoder = new TextEncoder();
   const data = encoder.encode(memo);
@@ -60,6 +80,16 @@ function buildMemoInstruction(memo) {
   };
 }
 
+/**
+ * Builds a wallet transfer transaction in the enclave.
+ * Pure function with no side effects - runs in attested environment.
+ * @param {Object} decryptedPayload - Decrypted user request
+ * @param {Object} decryptedPayload.context - User context (wallet, origin)
+ * @param {Object} decryptedPayload.params - Transfer params (recipient, amount, mint?, symbol?, memo?)
+ * @param {Object} prepared - Pre-fetched data from prep stage
+ * @param {boolean} includeAttestation - Whether attestation is requested
+ * @returns {Object} Transaction data { wireTransaction, transfer }
+ */
 export function buildTransferTransaction(decryptedPayload, prepared, includeAttestation) {
   const { context, params } = decryptedPayload;
   const userPubkey = address(context.wallet);

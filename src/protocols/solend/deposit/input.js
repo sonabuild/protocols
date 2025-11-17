@@ -11,6 +11,12 @@ import {
 
 const ASSOCIATED_TOKEN_PROGRAM_ID = address('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
+/**
+ * Derives the associated token account address for a given mint and owner.
+ * @param {Address} mint - Token mint address
+ * @param {Address} owner - Token account owner address
+ * @returns {Promise<Address>} Associated token account address
+ */
 async function getAssociatedTokenAddress(mint, owner) {
   const encoder = getAddressEncoder();
   const seeds = [
@@ -27,6 +33,12 @@ async function getAssociatedTokenAddress(mint, owner) {
   return ata;
 }
 
+/**
+ * Checks which accounts exist on-chain via batch RPC call.
+ * @param {Object} rpc - Solana RPC client
+ * @param {Address[]} addresses - Addresses to check
+ * @returns {Promise<Object>} Map of address strings to existence booleans
+ */
 async function checkAccountsExist(rpc, addresses) {
   const result = await rpc.getMultipleAccounts(addresses).send();
 
@@ -39,6 +51,15 @@ async function checkAccountsExist(rpc, addresses) {
   return existsMap;
 }
 
+/**
+ * Prepares Solend deposit by fetching on-chain data and deriving accounts.
+ * Runs on host with network access before enclave execution.
+ * @param {Object} input - Deposit request
+ * @param {Object} input.context - User context (wallet, origin)
+ * @param {Object} input.params - Deposit parameters (amount, mint?, symbol?)
+ * @param {Object} rpc - Solana RPC client
+ * @returns {Promise<Object>} Prepared data for enclave (lifetime, accounts, reserve data)
+ */
 export async function prepareDepositInput(input, rpc) {
   const { context, params } = input;
 
