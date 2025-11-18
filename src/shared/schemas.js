@@ -138,7 +138,8 @@ export function operationResponse(outputSchema) {
     transaction: z.string().optional().describe('Base64 encoded signed transaction'),
     attestation: z.object({
       signature: z.string().describe('Attestation signature'),
-      pcrs: z.object({}).passthrough().describe('Platform Configuration Registers')
+      doc: z.string().optional().describe('NSM attestation document (base64)'),
+      pcrs: z.object({}).passthrough().optional().describe('Platform Configuration Registers')
     }).optional(),
     metadata: z.object({
       protocol: z.string(),
