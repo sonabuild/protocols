@@ -183,9 +183,34 @@ export function exportSchemaMetadata() {
     };
   }
 
+  // Generate OpenAI-compatible tools from routes
+  const tools = Object.entries(routes).map(([path, meta]) => {
+    const functionName = path.slice(1).replace('/', '.');
+
+    let parameters = {
+      type: 'object',
+      properties: {},
+      required: []
+    };
+
+    if (meta.schemas?.input?.properties?.params) {
+      parameters = meta.schemas.input.properties.params;
+    }
+
+    return {
+      type: 'function',
+      function: {
+        name: functionName,
+        description: `${meta.label} - ${meta.protocol} protocol ${meta.operation} ${meta.type}`,
+        parameters
+      }
+    };
+  });
+
   return {
     version: '2.0',
     protocols: listProtocols(),
-    routes
+    routes,
+    tools
   };
 }
