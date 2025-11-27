@@ -3,10 +3,10 @@ import { SolanaAddress, BlockhashLifetime, WireTransaction } from '../../../shar
 
 export const swapInputSchema = z.object({
   inputMint: SolanaAddress
-    .describe('Input token mint address on Solana. Common tokens: SOL=So11111111111111111111111111111111111111112, USDC=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
+    .describe('Input token mint address on Solana. Common tokens: SOL=So11111111111111111111111111111111111111112, USDC=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v, BONK=DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263, USDT=Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB, JUP=JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN'),
 
   outputMint: SolanaAddress
-    .describe('Output token mint address on Solana. Common tokens: SOL=So11111111111111111111111111111111111111112, USDC=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
+    .describe('Output token mint address on Solana. Common tokens: SOL=So11111111111111111111111111111111111111112, USDC=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v, BONK=DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263, USDT=Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB, JUP=JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN'),
 
   amount: z.number()
     .positive()
@@ -60,7 +60,12 @@ export const swapEnclaveSchema = z.object({
     rentFeeLamports: z.number().int().nonnegative(),
     feeBps: z.number().optional(),
     platformFee: z.any().optional()
-  }).optional()
+  }).optional(),
+
+  addressLookupTableAccounts: z.array(z.object({
+    key: z.string().describe('ALT account address'),
+    state: z.string().describe('Base64 encoded ALT account data')
+  })).optional().describe('Address lookup table accounts fetched from RPC')
 });
 
 export const swapOutputSchema = z.object({

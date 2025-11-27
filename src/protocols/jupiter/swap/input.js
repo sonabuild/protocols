@@ -152,6 +152,48 @@ export async function prepareSwapInput(input, rpc) {
   const userInputAta = await getAssociatedTokenAddress(inputMintAddr, userAddress);
   const userOutputAta = await getAssociatedTokenAddress(outputMintAddr, userAddress);
 
+  // Fetch address lookup tables if present
+  let addressLookupTableAccounts = [];
+  try {
+    const txBuffer = Buffer.from(orderData.transaction, 'base64');
+    // Parse the transaction to extract ALT addresses (if any)
+    // Transaction format: https://docs.solana.com/developing/programming-model/transactions#message-format
+    // ALTs are in the message.addressTableLookups array
+
+    // Simple heuristic: if transaction uses versioned format (starts with 0x80), it might have ALTs
+    if (txBuffer[0] === 0x80) {
+      console.log('[Jupiter] Transaction uses versioned format, checking for ALTs...');
+
+      // For now, try to deserialize using web3.js to extract ALTs
+      const { VersionedTransaction } = await import('@solana/web3.js');
+      const tx = VersionedTransaction.deserialize(txBuffer);
+
+      if (tx.message.addressTableLookups && tx.message.addressTableLookups.length > 0) {
+        const altAddresses = tx.message.addressTableLookups.map(lookup => lookup.accountKey.toString());
+        console.log(`[Jupiter] Found ${altAddresses.length} ALTs:`, altAddresses);
+
+        // Fetch ALT accounts
+        for (const altAddress of altAddresses) {
+          try {
+            const altAccount = await rpc.getAccountInfo(address(altAddress), { encoding: 'base64' }).send();
+            if (altAccount.value) {
+              addressLookupTableAccounts.push({
+                key: altAddress,
+                state: altAccount.value.data[0] // base64 encoded data
+              });
+              console.log(`[Jupiter] Fetched ALT: ${altAddress}`);
+            }
+          } catch (err) {
+            console.warn(`[Jupiter] Failed to fetch ALT ${altAddress}:`, err.message);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Jupiter] ALT extraction failed:', err.message);
+    // Continue without ALTs - enclave will error if they're needed
+  }
+
   return {
     lifetime: {
       blockhash: lifetime.blockhash,
@@ -186,6 +228,7 @@ export async function prepareSwapInput(input, rpc) {
       rentFeeLamports: orderData.rentFeeLamports || 0,
       feeBps: orderData.feeBps,
       platformFee: orderData.platformFee
-    }
+    },
+    addressLookupTableAccounts: addressLookupTableAccounts || []
   };
 }

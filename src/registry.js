@@ -178,14 +178,16 @@ export function exportSchemaMetadata() {
         output: outputSchema
       },
       ui: {
-        order: getDefaultOrder(protocolName, operationName)
+        order: getDefaultOrder(protocolName, operationName),
+        ...protocol.ui
       }
     };
   }
 
   // Generate OpenAI-compatible tools from routes
   const tools = Object.entries(routes).map(([path, meta]) => {
-    const functionName = path.slice(1).replace('/', '.');
+    // Use underscore instead of dot for OpenAI compatibility (only allows ^[a-zA-Z0-9_-]+$)
+    const functionName = path.slice(1).replace('/', '_');
 
     let parameters = {
       type: 'object',
@@ -193,7 +195,11 @@ export function exportSchemaMetadata() {
       required: []
     };
 
-    if (meta.schemas?.input?.properties?.params) {
+    if (meta.schemas?.input?.properties?.hint?.properties?.params) {
+      // Operation schema (operationInput wrapper)
+      parameters = meta.schemas.input.properties.hint.properties.params;
+    } else if (meta.schemas?.input?.properties?.params) {
+      // Query schema (queryInput wrapper)
       parameters = meta.schemas.input.properties.params;
     }
 
